@@ -1,26 +1,159 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #101112;
+  --foreground: #eeeeed;
+  --app-canvas: #101112;
+  --app-sidebar: #191a1b;
+  --app-sidebar-border: #292a2c;
+  --app-surface: #1b1c1e;
+  --app-surface-input: #222426;
+  --app-surface-card: #252729;
+  --app-surface-hover: #202123;
+  --app-surface-active: #242527;
+  --app-surface-modal-close: #2b2c2e;
+  --app-border: #303133;
+  --app-border-soft: #242527;
+  --app-border-strong: #393b3d;
+  --app-border-image: #343638;
+  --app-border-divider: #363739;
+  --app-border-dashed: #3a3c3e;
+  --app-border-control: #4a4c4e;
+  --app-border-notice: #47494b;
+  --app-text: #eeeeed;
+  --app-text-strong: #f2f2f1;
+  --app-text-logo: #f0f0ef;
+  --app-text-panel: #d9d9d8;
+  --app-text-hover: #d7d7d6;
+  --app-text-nav: #888a8d;
+  --app-text-muted: #a3a5a8;
+  --app-text-dim: #96989b;
+  --app-text-card: #e9e9e8;
+  --app-text-deck: #e8e8e7;
+  --app-text-subtle: #9b9da0;
+  --app-text-body: #b7b9bb;
+  --app-text-market: #b0b1b3;
+  --app-text-notice: #e7e7e6;
+  --app-accent: #e86a55;
+  --app-accent-active: #eb6b57;
+  --app-accent-hover: #f18a72;
+  --app-accent-deep: #a95442;
+  --app-accent-brand: #be514b;
+  --app-amber-brand: #f0ad4e;
+  --app-amber: #e3ad4e;
+  --app-amber-bar: #dfa84b;
+  --app-progress-track: #3a3b3d;
+  --app-image-surface: #252729;
+  --app-image-line: #37393b;
+  --app-danger-surface: #261c1c;
+  --app-danger-border: #6b4038;
+  --app-danger-text: #f0d2ca;
+  --app-danger-muted: #c9a9a1;
+  --app-danger-action: #f0b3a3;
+  --app-danger-hover: #3a2421;
+  --app-overlay: #000000;
+  --app-shadow: #000000;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-app-canvas: var(--app-canvas);
+  --color-app-sidebar: var(--app-sidebar);
+  --color-app-sidebar-border: var(--app-sidebar-border);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-input: var(--app-surface-input);
+  --color-app-surface-card: var(--app-surface-card);
+  --color-app-surface-hover: var(--app-surface-hover);
+  --color-app-surface-active: var(--app-surface-active);
+  --color-app-surface-modal-close: var(--app-surface-modal-close);
+  --color-app-border: var(--app-border);
+  --color-app-border-soft: var(--app-border-soft);
+  --color-app-border-strong: var(--app-border-strong);
+  --color-app-border-image: var(--app-border-image);
+  --color-app-border-divider: var(--app-border-divider);
+  --color-app-border-dashed: var(--app-border-dashed);
+  --color-app-border-control: var(--app-border-control);
+  --color-app-border-notice: var(--app-border-notice);
+  --color-app-text: var(--app-text);
+  --color-app-text-strong: var(--app-text-strong);
+  --color-app-text-logo: var(--app-text-logo);
+  --color-app-text-panel: var(--app-text-panel);
+  --color-app-text-hover: var(--app-text-hover);
+  --color-app-text-nav: var(--app-text-nav);
+  --color-app-text-muted: var(--app-text-muted);
+  --color-app-text-dim: var(--app-text-dim);
+  --color-app-text-card: var(--app-text-card);
+  --color-app-text-deck: var(--app-text-deck);
+  --color-app-text-subtle: var(--app-text-subtle);
+  --color-app-text-body: var(--app-text-body);
+  --color-app-text-market: var(--app-text-market);
+  --color-app-text-notice: var(--app-text-notice);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-active: var(--app-accent-active);
+  --color-app-accent-hover: var(--app-accent-hover);
+  --color-app-accent-deep: var(--app-accent-deep);
+  --color-app-accent-brand: var(--app-accent-brand);
+  --color-app-amber-brand: var(--app-amber-brand);
+  --color-app-amber: var(--app-amber);
+  --color-app-amber-bar: var(--app-amber-bar);
+  --color-app-progress-track: var(--app-progress-track);
+  --color-app-image-surface: var(--app-image-surface);
+  --color-app-image-line: var(--app-image-line);
+  --color-app-danger-surface: var(--app-danger-surface);
+  --color-app-danger-border: var(--app-danger-border);
+  --color-app-danger-text: var(--app-danger-text);
+  --color-app-danger-muted: var(--app-danger-muted);
+  --color-app-danger-action: var(--app-danger-action);
+  --color-app-danger-hover: var(--app-danger-hover);
+  --color-app-overlay: var(--app-overlay);
+  --color-app-shadow: var(--app-shadow);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+  scroll-behavior: smooth;
 }
 
 body {
+  min-height: 100%;
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--app-accent);
+  color: var(--app-canvas);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+input {
+  caret-color: var(--app-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

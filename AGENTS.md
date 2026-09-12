@@ -64,7 +64,7 @@ Use this folder structure:
 app/
   (auth)/
   (dashboard)/
-    cards/
+    page.tsx       # public Card Library at `/`
     decks/
     log/
     settings/
@@ -77,13 +77,13 @@ store/
 types/
 ```
 
-**app/** holds routes only, using Next.js route groups. `(auth)` contains Clerk sign-in/sign-up pages. `(dashboard)` contains the authenticated app itself, one subfolder per feature area, matching the feature list above. `api/` holds route handlers needed for things Server Actions can't cleanly do — primarily the Midtrans webhook notification handler and Clerk webhooks. Pages compose components and call server actions/queries; they should not contain large reusable UI blocks or business logic inline.
+**app/** holds routes only, using Next.js route groups. `(auth)` contains Clerk sign-in/sign-up pages. The `(dashboard)` root page is the public Card Library at `/`; there is no separate Home page or `/cards` route. Other feature areas use their own subfolders. `api/` holds route handlers needed for things Server Actions can't cleanly do — primarily the Midtrans webhook notification handler and Clerk webhooks. Pages compose components and call server actions/queries; they should not contain large reusable UI blocks or business logic inline.
 
 **components/** is for reusable UI. Create a component when it is reused in multiple places, when it makes a page easier to read, or when it represents a clear UI concept. Examples for this app: `CardGridItem`, `CardDetailSheet`, `RarityBadge`, `ColorTag`, `DeckColorIndicator`, `MatchResultPill`. Do not create components too early.
 
 **lib/** holds external service helpers and server-side utilities: `db.ts` (Drizzle client singleton), `clerk.ts`, `cn.ts`, plus query/mutation functions grouped by domain (e.g. `lib/cards.ts`, `lib/decks-local.ts` for the IndexedDB layer). Server Actions live here or colocated in `app/`, never inline business logic in a page component.
 
-**src/db/** holds the Drizzle table definitions and database client wiring. **drizzle/** holds versioned Drizzle Kit migrations. Drizzle is the implementation source of truth for server tables; `schema_cloud.md` is the cloud data contract and `schema_cloud.sql` is its executable PostgreSQL reference. Keep all three aligned when the server schema changes. The catalog uses the actual table names `card_colors`, `card_rarities`, `sets`, `cards`, `traits`, and `card_traits`. Account data uses `users`, `match_logs`, `decks`, `deck_colors`, and `deck_cards`. Cloud deck tables are active for authenticated users. `subscriptions`, `collection_items`, and `price_history` remain schema-only tables outside the current product scope.
+**src/db/** holds the Drizzle table definitions and database client wiring. **drizzle/** holds versioned Drizzle Kit migrations. Drizzle is the implementation source of truth for server tables; `schema_cloud.md` is the cloud data contract and `schema_cloud.sql` is its executable PostgreSQL reference. Keep all three aligned when the server schema changes. The catalog uses the actual table names `card_colors`, `card_rarities`, `sets`, `cards`, `traits`, and `card_traits`. Account data uses `users`, `match_logs`, `decks`, `deck_colors`, and `deck_cards`. Cloud deck tables are active for authenticated users.
 
 **store/** holds Zustand stores for client-only, ephemeral state (e.g. the in-progress deck builder draft before it's saved to IndexedDB, filter UI state). This is not for server data — server data is fetched via Server Components/Server Actions, not duplicated into a client store.
 
@@ -124,10 +124,9 @@ Card artwork itself comes from the `image_url` field on each card record (server
 ## Data Layer Rules
 
 - **Cloud catalog:** `card_colors`, `card_rarities`, `sets`, `cards`, `traits`, `card_traits`.
-- **Cloud account data:** `users`, `match_logs`. Derive the owner from the authenticated session and enforce ownership in every read and mutation, including Server Actions and Route Handlers.
+- **Cloud account data:** `users`, `match_logs`, `decks`, `deck_colors`, and `deck_cards`. Derive the owner from the authenticated session and enforce ownership in every read and mutation, including Server Actions and Route Handlers.
 - **Guest deck persistence:** native browser IndexedDB stores each guest deck as one record in the `decks` object store, including its colors and card entries. This lets one transaction save a complete deck atomically. After login, an explicit import creates a new cloud deck. The local record is retained and is not automatically synchronized. The structure, indexes, upgrade rules, and validation contract are defined in `schema_local.md`.
 - **Browser-only boundary:** IndexedDB is accessed only from client-side code. Server Components and Server Actions must not open or depend on it. Do not introduce SQLite, a local card-catalog cache, or offline queues into the web app unless the product scope changes explicitly.
-- **Deferred tables:** subscriptions, collection tracking, and price history remain in the SQL reference, but are outside the initial web release.
 - `schema_cloud.sql` creates a fresh PostgreSQL database. Existing cloud installations require versioned, data-preserving migrations. IndexedDB upgrades are defined separately in `schema_local.md` and run only inside `onupgradeneeded`.
 
 ---
@@ -174,7 +173,7 @@ When building a feature:
 
 Use Clerk. Do not build custom auth.
 
-Public visitors may browse `/cards` and build local decks. `/log`, cloud deck operations, and account settings require login. A logged-in user can explicitly import a valid local deck into the account. Route groups such as `(dashboard)` do not define URL paths. Enforce access at the routing boundary and independently authorize every protected server read and mutation.
+Public visitors may browse the Card Library at `/` and build local decks. There is no separate Home page or `/cards` route. `/log`, cloud deck operations, and account settings require login. A logged-in user can explicitly import a valid local deck into the account. Route groups such as `(dashboard)` do not define URL paths. Enforce access at the routing boundary and independently authorize every protected server read and mutation.
 
 ---
 
@@ -201,17 +200,3 @@ Before every feature:
 - Scores are optional nonnegative integers in this revision. The result remains required (`win`, `loss`, `draw`); do not implement automatic result calculation until D4 is resolved. When both date fields exist, validate their consistency in the selected display timezone.
 - PostgreSQL `updated_at DEFAULT now()` only sets the initial value; mutations must update it explicitly (or use an agreed database trigger/Drizzle update mapping). Use account-scoped browser records before enabling multiple accounts on one device.
 - Deck codes require versioning, validation, and a format decision before implementation (D5). A share code must not expose private account data.
-
-## Decision Register
-
-The original instructions contain conflicting choices. These items are open, not approved requirements:
-
-| ID | Decision still needed | Current handling |
-| --- | --- | --- |
-| D2 | Are offline card download, collection tracking, subscriptions, and price history still planned? | Keep their cloud tables as deferred scope. The web client has no local catalog cache or offline mutation queue. |
-| D3 | Valid power/range values, trait taxonomy, exact versus maximum 50 cards, saved incomplete drafts, and copy limits across card variants | Keep unresolved catalog fields nullable and preserve documented maximums; do not invent official rules. Card level is resolved as a required integer from 1 through 6. |
-| D4 | Score meaning and win/loss calculation, draw support, match formats, turn-order values, and display timezone | Store optional raw fields; result stays explicit until these rules are confirmed. |
-| D5 | Deck-code encoding/version and import/export behavior | Deck imports create a cloud copy and retain the local record. Automatic synchronization, conflict resolution, and deletion propagation are out of scope. |
-| D6 | Midtrans versus RevenueCat and subscription lifecycle | Existing Midtrans guidance and legacy `revenuecat_customer_id` are provider-specific references, not a decision to implement both. Do not implement billing until one approach is selected. |
-
-When a decision is confirmed, replace its open entry and update `schema_cloud.md`, `schema_cloud.sql`, `schema_local.md`, and the application schema as applicable. Never infer product behavior from schema-only tables.
