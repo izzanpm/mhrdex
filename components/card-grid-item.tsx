@@ -10,7 +10,7 @@ export function CardGridItem({ card }: { card: CardListItem }) {
 
   return (
     <article
-      aria-label={`${card.name}, ${card.cardCode}`}
+      aria-label={`${card.name}, ${card.cardCode}, ${card.rarityCode}`}
       className="relative aspect-[3/4] min-w-0 overflow-hidden rounded-[10px] border border-app-border-image bg-app-image-surface"
     >
       {localImage ? (

@@ -21,8 +21,9 @@ The cloud database stores the card catalog, authenticated users, match logs, and
 ```mermaid
 erDiagram
   CARD_COLORS ||--o{ CARDS : classifies
-  CARD_RARITIES ||--o{ CARDS : classifies
+  CARD_RARITIES ||--o{ CARD_VARIANTS : classifies
   SETS ||--o{ CARDS : contains
+  CARDS ||--o{ CARD_VARIANTS : has
   CARDS ||--o{ CARD_TRAITS : has
   TRAITS ||--o{ CARD_TRAITS : labels
   USERS ||--o{ MATCH_LOGS : owns
@@ -61,7 +62,6 @@ Seed values, from highest sort priority to lowest, are `ER`, `GR`, `MR`, `PR`, `
 | --- | --- | --- |
 | `id` | `uuid` | Primary key; generated |
 | `code` | `text` | Required and unique |
-| `name` | `text` | Required |
 | `release_date` | `date` | Optional |
 | `description` | `text` | Optional |
 
@@ -73,19 +73,31 @@ Seed values, from highest sort priority to lowest, are `ER`, `GR`, `MR`, `PR`, `
 | `card_code` | `text` | Required and unique |
 | `name` | `text` | Required |
 | `color_code` | `text` | Required; references `card_colors.code` |
-| `rarity_code` | `text` | Required; references `card_rarities.code` |
-| `level` | `integer` | Required; value from 1 through 6; replaces the former `cost` attribute |
-| `power` | `integer` | Optional |
-| `range` | `text` | Optional; final taxonomy remains open in D3 |
 | `card_type` | `text` | Optional; final taxonomy remains open in D3 |
 | `ability_text` | `text` | Optional |
 | `flavor_text` | `text` | Optional |
 | `set_id` | `uuid` | Optional; references `sets.id` |
-| `image_url` | `text` | Optional |
 | `created_at` | `timestamptz` | Required; defaults to `now()` |
 | `updated_at` | `timestamptz` | Required; defaults to `now()` |
 
-Indexes: `idx_cards_color`, `idx_cards_rarity`, `idx_cards_set`, `idx_cards_level`, and GIN full-text index `idx_cards_name` using the `simple` text-search configuration.
+Indexes: `idx_cards_color`, `idx_cards_set`, and GIN full-text index `idx_cards_name` using the `simple` text-search configuration.
+
+### `card_variants`
+
+Each row represents a rarity and artwork variant of a base card. Decks reference the base card, not a variant.
+
+| Column | Type | Rules |
+| --- | --- | --- |
+| `id` | `uuid` | Primary key; generated |
+| `card_id` | `uuid` | Required; references `cards.id`; cascades on delete |
+| `rarity_code` | `text` | Required; references `card_rarities.code` |
+| `level` | `integer` | Required; value from 1 through 6 |
+| `power` | `integer` | Optional |
+| `range` | `text` | Optional; final taxonomy remains open in D3 |
+| `image_url` | `text` | Optional permanent local or hosted path |
+| `source_page_url` | `text` | Optional scraper provenance |
+
+The (`card_id`, `rarity_code`) pair is unique. Indexes: `idx_card_variants_card`, `idx_card_variants_rarity`, and `idx_card_variants_level`.
 
 ### `traits`
 
@@ -182,7 +194,7 @@ The composite primary key is (`deck_id`, `card_id`). The application must atomic
 ## Migration rules
 
 - Use versioned Drizzle Kit migrations for existing databases. Do not rerun the fresh-install SQL against populated environments.
-- Rename `cards.cost` to `cards.level` with a data-preserving migration.
+- Backfill existing card attributes into `card_variants` before dropping the former variant columns from `cards`.
 - Review destructive or lossy migrations before applying them.
 - Apply schema migrations before deploying application code that requires the new fields.
 - Keep `schema_cloud.md`, `schema_cloud.sql`, `src/db/schema.ts`, and the Drizzle migration history synchronized.

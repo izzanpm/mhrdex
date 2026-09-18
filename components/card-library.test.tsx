@@ -7,18 +7,20 @@ import { CardGridItem } from "./card-grid-item";
 
 const cards = [
   {
-    id: "1",
+    id: "variant-mr",
     cardCode: "MHR-001",
     name: "Iron Man",
     cardType: "Hero",
-    imageUrl: null,
+    rarityCode: "MR",
+    imageUrl: "/cards/MHR-001-MR.webp",
   },
   {
-    id: "2",
-    cardCode: "MHR-002",
-    name: "Ultron",
-    cardType: "Villain",
-    imageUrl: null,
+    id: "variant-ur",
+    cardCode: "MHR-001",
+    name: "Iron Man",
+    cardType: "Hero",
+    rarityCode: "UR",
+    imageUrl: "/cards/MHR-001-UR.webp",
   },
 ];
 
@@ -35,14 +37,15 @@ test("renders database cards in the reference card grid", () => {
 
   assert.match(markup, /2 cards found/);
   assert.equal((markup.match(/<article/g) ?? []).length, 2);
+  assert.match(markup, /aria-label="Iron Man, MHR-001, MR"/);
+  assert.match(markup, /aria-label="Iron Man, MHR-001, UR"/);
   assert.match(markup, /aspect-\[3\/4\]/);
   assert.match(markup, /uppercase[^>]*>Hero</);
-  assert.match(markup, /uppercase[^>]*>Villain</);
 });
 
 test("filters cards by name or code without case sensitivity", () => {
-  assert.deepEqual(filterCards(cards, "iron"), [cards[0]]);
-  assert.deepEqual(filterCards(cards, "mhr-002"), [cards[1]]);
+  assert.deepEqual(filterCards(cards, "iron"), cards);
+  assert.deepEqual(filterCards(cards, "mhr-001"), cards);
   assert.deepEqual(filterCards(cards, "  "), cards);
 });
 

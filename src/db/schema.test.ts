@@ -10,6 +10,7 @@ import {
   cardSets,
   cards,
   cardTraits,
+  cardVariants,
   deckCards,
   deckColors,
   decks,
@@ -23,6 +24,7 @@ const tables = [
   cardRarities,
   cardSets,
   cards,
+  cardVariants,
   traits,
   cardTraits,
   users,
@@ -38,6 +40,7 @@ test("defines the cloud tables from the ERD", () => {
     "card_rarities",
     "sets",
     "cards",
+    "card_variants",
     "traits",
     "card_traits",
     "users",
@@ -49,18 +52,68 @@ test("defines the cloud tables from the ERD", () => {
 });
 
 test("defines the required checks and indexes", () => {
+  const variantsConfig = getTableConfig(cardVariants);
+
+  assert.equal(
+    getTableConfig(cardSets).columns.some((column) => column.name === "name"),
+    false,
+  );
+  for (const columnName of [
+    "rarity_code",
+    "level",
+    "power",
+    "range",
+    "image_url",
+  ]) {
+    assert.equal(
+      getTableConfig(cards).columns.some(
+        (column) => column.name === columnName,
+      ),
+      false,
+    );
+  }
   assert.deepEqual(
     getTableConfig(cards).checks.map(({ name }) => name),
-    ["cards_level_check"],
+    [],
   );
   assert.deepEqual(
     getTableConfig(cards).indexes.map(({ config }) => config.name),
     [
       "idx_cards_color",
-      "idx_cards_rarity",
       "idx_cards_set",
-      "idx_cards_level",
       "idx_cards_name",
+    ],
+  );
+  assert.deepEqual(
+    variantsConfig.columns.map((column) => column.name),
+    [
+      "id",
+      "card_id",
+      "rarity_code",
+      "level",
+      "power",
+      "range",
+      "image_url",
+      "source_page_url",
+    ],
+  );
+  assert.ok(
+    variantsConfig.uniqueConstraints.some(
+      (constraint) =>
+        constraint.name === "card_variants_card_rarity_unique",
+    ),
+  );
+  assert.ok(
+    variantsConfig.checks.some(
+      (constraint) => constraint.name === "card_variants_level_check",
+    ),
+  );
+  assert.deepEqual(
+    variantsConfig.indexes.map((index) => index.config.name).sort(),
+    [
+      "idx_card_variants_card",
+      "idx_card_variants_level",
+      "idx_card_variants_rarity",
     ],
   );
   assert.deepEqual(

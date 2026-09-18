@@ -3,5 +3,6 @@ export type CardListItem = {
   cardCode: string;
   name: string;
   cardType: string | null;
+  rarityCode: string;
   imageUrl: string | null;
 };

@@ -15,7 +15,6 @@ CREATE TABLE "card_rarities" (
 CREATE TABLE "sets" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"code" text NOT NULL UNIQUE,
-	"name" text NOT NULL,
 	"release_date" date,
 	"description" text
 );
@@ -31,18 +30,25 @@ CREATE TABLE "cards" (
 	"card_code" text NOT NULL UNIQUE,
 	"name" text NOT NULL,
 	"color_code" text NOT NULL,
-	"rarity_code" text NOT NULL,
-	"level" integer NOT NULL,
-	"power" integer,
-	"range" text,
 	"card_type" text,
 	"ability_text" text,
 	"flavor_text" text,
 	"set_id" uuid,
-	"image_url" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "cards_level_check" CHECK ("level" between 1 and 6)
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "card_variants" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"card_id" uuid NOT NULL,
+	"rarity_code" text NOT NULL,
+	"level" integer NOT NULL,
+	"power" integer,
+	"range" text,
+	"image_url" text,
+	"source_page_url" text,
+	CONSTRAINT "card_variants_card_rarity_unique" UNIQUE("card_id","rarity_code"),
+	CONSTRAINT "card_variants_level_check" CHECK ("level" between 1 and 6)
 );
 --> statement-breakpoint
 CREATE TABLE "deck_cards" (
@@ -107,17 +113,19 @@ CREATE TABLE "users" (
 );
 --> statement-breakpoint
 CREATE INDEX "idx_cards_color" ON "cards" ("color_code");--> statement-breakpoint
-CREATE INDEX "idx_cards_rarity" ON "cards" ("rarity_code");--> statement-breakpoint
 CREATE INDEX "idx_cards_set" ON "cards" ("set_id");--> statement-breakpoint
-CREATE INDEX "idx_cards_level" ON "cards" ("level");--> statement-breakpoint
 CREATE INDEX "idx_cards_name" ON "cards" USING gin (to_tsvector('simple', "name"));--> statement-breakpoint
+CREATE INDEX "idx_card_variants_card" ON "card_variants" ("card_id");--> statement-breakpoint
+CREATE INDEX "idx_card_variants_rarity" ON "card_variants" ("rarity_code");--> statement-breakpoint
+CREATE INDEX "idx_card_variants_level" ON "card_variants" ("level");--> statement-breakpoint
 CREATE INDEX "idx_decks_user" ON "decks" ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_match_logs_user" ON "match_logs" ("user_id");--> statement-breakpoint
 ALTER TABLE "card_traits" ADD CONSTRAINT "card_traits_card_id_cards_id_fkey" FOREIGN KEY ("card_id") REFERENCES "cards"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "card_traits" ADD CONSTRAINT "card_traits_trait_id_traits_id_fkey" FOREIGN KEY ("trait_id") REFERENCES "traits"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "cards" ADD CONSTRAINT "cards_color_code_card_colors_code_fkey" FOREIGN KEY ("color_code") REFERENCES "card_colors"("code");--> statement-breakpoint
-ALTER TABLE "cards" ADD CONSTRAINT "cards_rarity_code_card_rarities_code_fkey" FOREIGN KEY ("rarity_code") REFERENCES "card_rarities"("code");--> statement-breakpoint
 ALTER TABLE "cards" ADD CONSTRAINT "cards_set_id_sets_id_fkey" FOREIGN KEY ("set_id") REFERENCES "sets"("id");--> statement-breakpoint
+ALTER TABLE "card_variants" ADD CONSTRAINT "card_variants_card_id_cards_id_fkey" FOREIGN KEY ("card_id") REFERENCES "cards"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "card_variants" ADD CONSTRAINT "card_variants_rarity_code_card_rarities_code_fkey" FOREIGN KEY ("rarity_code") REFERENCES "card_rarities"("code");--> statement-breakpoint
 ALTER TABLE "deck_cards" ADD CONSTRAINT "deck_cards_deck_id_decks_id_fkey" FOREIGN KEY ("deck_id") REFERENCES "decks"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "deck_cards" ADD CONSTRAINT "deck_cards_card_id_cards_id_fkey" FOREIGN KEY ("card_id") REFERENCES "cards"("id");--> statement-breakpoint
 ALTER TABLE "deck_colors" ADD CONSTRAINT "deck_colors_deck_id_decks_id_fkey" FOREIGN KEY ("deck_id") REFERENCES "decks"("id") ON DELETE CASCADE;--> statement-breakpoint

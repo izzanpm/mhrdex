@@ -123,7 +123,7 @@ export function CardLibrary({
         </div>
       </header>
 
-      <div className="mt-[31px] grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(240px,381px)] lg:gap-6">
+      <div className="mt-[31px] grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-4">
         <label className="relative block">
           <span className="sr-only">{copy.placeholder}</span>
           <span className="pointer-events-none absolute left-[25px] top-1/2 -translate-y-1/2 text-app-text-muted">
@@ -138,7 +138,7 @@ export function CardLibrary({
           />
         </label>
         <button
-          className="min-h-[53px] rounded-[9px] border border-app-border bg-app-surface-input px-4 font-mono text-[10px] font-medium tracking-[0.06em] text-app-text-logo transition-colors hover:border-app-accent hover:text-app-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent"
+          className="min-h-[53px] rounded-[9px] border border-app-border bg-app-surface-input px-3 font-mono text-[10px] font-medium tracking-[0.06em] text-app-text-logo transition-colors hover:border-app-accent hover:text-app-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent lg:w-fit lg:justify-self-end"
           onClick={() => setNotice(copy.filterNotice)}
           type="button"
         >

@@ -1,18 +1,21 @@
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 import { db } from "@/src/db/client";
-import { cards } from "@/src/db/schema";
+import { cardRarities, cardVariants, cards } from "@/src/db/schema";
 import type { CardListItem } from "@/types/card";
 
 export function getCards(): Promise<CardListItem[]> {
   return db
     .select({
-      id: cards.id,
+      id: cardVariants.id,
       cardCode: cards.cardCode,
       name: cards.name,
       cardType: cards.cardType,
-      imageUrl: cards.imageUrl,
+      rarityCode: cardVariants.rarityCode,
+      imageUrl: cardVariants.imageUrl,
     })
     .from(cards)
-    .orderBy(asc(cards.cardCode));
+    .innerJoin(cardVariants, eq(cardVariants.cardId, cards.id))
+    .innerJoin(cardRarities, eq(cardRarities.code, cardVariants.rarityCode))
+    .orderBy(asc(cards.cardCode), asc(cardRarities.sortOrder));
 }

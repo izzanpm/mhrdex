@@ -83,7 +83,7 @@ types/
 
 **lib/** holds external service helpers and server-side utilities: `db.ts` (Drizzle client singleton), `clerk.ts`, `cn.ts`, plus query/mutation functions grouped by domain (e.g. `lib/cards.ts`, `lib/decks-local.ts` for the IndexedDB layer). Server Actions live here or colocated in `app/`, never inline business logic in a page component.
 
-**src/db/** holds the Drizzle table definitions and database client wiring. **drizzle/** holds versioned Drizzle Kit migrations. Drizzle is the implementation source of truth for server tables; `schema_cloud.md` is the cloud data contract and `schema_cloud.sql` is its executable PostgreSQL reference. Keep all three aligned when the server schema changes. The catalog uses the actual table names `card_colors`, `card_rarities`, `sets`, `cards`, `traits`, and `card_traits`. Account data uses `users`, `match_logs`, `decks`, `deck_colors`, and `deck_cards`. Cloud deck tables are active for authenticated users.
+**src/db/** holds the Drizzle table definitions and database client wiring. **drizzle/** holds versioned Drizzle Kit migrations. Drizzle is the implementation source of truth for server tables; `schema_cloud.md` is the cloud data contract and `schema_cloud.sql` is its executable PostgreSQL reference. Keep all three aligned when the server schema changes. The catalog uses the actual table names `card_colors`, `card_rarities`, `sets`, `cards`, `card_variants`, `traits`, and `card_traits`. Account data uses `users`, `match_logs`, `decks`, `deck_colors`, and `deck_cards`. Cloud deck tables are active for authenticated users.
 
 **store/** holds Zustand stores for client-only, ephemeral state (e.g. the in-progress deck builder draft before it's saved to IndexedDB, filter UI state). This is not for server data — server data is fetched via Server Components/Server Actions, not duplicated into a client store.
 
@@ -117,13 +117,13 @@ Use Next.js `<Image>` for all card artwork and static assets — never a raw `<i
 
 Centralize static/UI assets (logos, icons not covered by the icon library) under `public/` and reference them by path; don't inline base64 images in components.
 
-Card artwork itself comes from the `image_url` field on each card record (server-side), not from a centralized static import — there are too many cards for that pattern to make sense.
+Card artwork itself comes from the `image_url` field on each `card_variants` record (server-side), not from a centralized static import — there are too many card variants for that pattern to make sense.
 
 ---
 
 ## Data Layer Rules
 
-- **Cloud catalog:** `card_colors`, `card_rarities`, `sets`, `cards`, `traits`, `card_traits`.
+- **Cloud catalog:** `card_colors`, `card_rarities`, `sets`, `cards`, `card_variants`, `traits`, `card_traits`.
 - **Cloud account data:** `users`, `match_logs`, `decks`, `deck_colors`, and `deck_cards`. Derive the owner from the authenticated session and enforce ownership in every read and mutation, including Server Actions and Route Handlers.
 - **Guest deck persistence:** native browser IndexedDB stores each guest deck as one record in the `decks` object store, including its colors and card entries. This lets one transaction save a complete deck atomically. After login, an explicit import creates a new cloud deck. The local record is retained and is not automatically synchronized. The structure, indexes, upgrade rules, and validation contract are defined in `schema_local.md`.
 - **Browser-only boundary:** IndexedDB is accessed only from client-side code. Server Components and Server Actions must not open or depend on it. Do not introduce SQLite, a local card-catalog cache, or offline queues into the web app unless the product scope changes explicitly.
@@ -193,8 +193,8 @@ Before every feature:
 
 ## Database Contract
 
-- Use `cards.level` as a required integer from 1 through 6; the former name is `cost`. Preserve existing cloud values when migrating and reject invalid legacy values rather than guessing replacements. Deck records store only `cardId` and `quantity`, so catalog attributes are not duplicated in IndexedDB.
-- Card detail includes nullable integer `power`, nullable text `range`, and traits through `traits` / `card_traits`. Text range and multiple traits are provisional representations, not a confirmed game taxonomy.
+- `card_variants.level` is a required integer from 1 through 6. Rarity, level, power, range, artwork, and source-page provenance belong to `card_variants`; preserve existing cloud values when migrating and reject invalid legacy values rather than guessing replacements.
+- Deck records reference base cards and store only `cardId` and `quantity`, so variant attributes are not duplicated in decks or IndexedDB. Card detail includes variant-owned nullable integer `power`, nullable text `range`, and base-card traits through `traits` / `card_traits`. Text range and multiple traits are provisional representations, not a confirmed game taxonomy.
 - Decks have 1–2 distinct identity colors, at most 3 copies per card, and at most 50 total cards. Validate totals, color membership, and nonempty identity atomically on save in the application; row constraints alone do not enforce aggregate rules. Apply the same validation to local save and cloud import. Whether incomplete drafts may be persisted is D3.
 - Match logs preserve deck name and color snapshots even if a deck changes or is deleted. Store optional `opponent_name`, `player_score`, `opponent_score`, `turn_order`, `match_format`, and `played_at`; retain `match_date` for legacy records whose time is unknown. Do not invent a midnight timestamp for legacy data.
 - Scores are optional nonnegative integers in this revision. The result remains required (`win`, `loss`, `draw`); do not implement automatic result calculation until D4 is resolved. When both date fields exist, validate their consistency in the selected display timezone.

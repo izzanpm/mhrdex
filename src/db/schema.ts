@@ -32,7 +32,6 @@ export const cardRarities = pgTable(
 export const cardSets = pgTable("sets", {
   id: uuid("id").defaultRandom().primaryKey(),
   code: text("code").notNull().unique(),
-  name: text("name").notNull(),
   releaseDate: date("release_date"),
   description: text("description"),
 });
@@ -46,17 +45,10 @@ export const cards = pgTable(
     colorCode: text("color_code")
       .notNull()
       .references(() => cardColors.code),
-    rarityCode: text("rarity_code")
-      .notNull()
-      .references(() => cardRarities.code),
-    level: integer("level").notNull(),
-    power: integer("power"),
-    range: text("range"),
     cardType: text("card_type"),
     abilityText: text("ability_text"),
     flavorText: text("flavor_text"),
     setId: uuid("set_id").references(() => cardSets.id),
-    imageUrl: text("image_url"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -66,14 +58,39 @@ export const cards = pgTable(
   },
   (table) => [
     index("idx_cards_color").on(table.colorCode),
-    index("idx_cards_rarity").on(table.rarityCode),
     index("idx_cards_set").on(table.setId),
-    index("idx_cards_level").on(table.level),
     index("idx_cards_name").using(
       "gin",
       sql`to_tsvector('simple', ${table.name})`,
     ),
-    check("cards_level_check", sql`${table.level} between 1 and 6`),
+  ],
+);
+
+export const cardVariants = pgTable(
+  "card_variants",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    cardId: uuid("card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    rarityCode: text("rarity_code")
+      .notNull()
+      .references(() => cardRarities.code),
+    level: integer("level").notNull(),
+    power: integer("power"),
+    range: text("range"),
+    imageUrl: text("image_url"),
+    sourcePageUrl: text("source_page_url"),
+  },
+  (table) => [
+    unique("card_variants_card_rarity_unique").on(
+      table.cardId,
+      table.rarityCode,
+    ),
+    index("idx_card_variants_card").on(table.cardId),
+    index("idx_card_variants_rarity").on(table.rarityCode),
+    index("idx_card_variants_level").on(table.level),
+    check("card_variants_level_check", sql`${table.level} between 1 and 6`),
   ],
 );
 

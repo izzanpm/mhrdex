@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "test": "tsx --test architecture.test.ts src/db/schema.test.ts lib/sidebar-data.test.ts components/sidebar.test.tsx components/card-library.test.tsx",
+    "test": "tsx --test architecture.test.ts src/db/schema.test.ts lib/sidebar-data.test.ts components/sidebar.test.tsx components/card-library.test.tsx scripts/cards-import.test.ts",
+    "import:cards": "tsx scripts/import-cards.ts",
     "start": "next start",
     "lint": "eslint"
   },
