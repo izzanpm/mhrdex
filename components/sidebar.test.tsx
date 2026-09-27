@@ -23,11 +23,14 @@ test("renders the approved legible desktop sidebar scale", () => {
     (match) => match[0],
   );
   const navigationIcons = Array.from(
-    navigation.matchAll(/<svg[^>]+height="14"[^>]+width="14">/g),
+    navigation.matchAll(/<svg[^>]+>/g),
+  ).filter(
+    (match) => match[0].includes('height="14"') && match[0].includes('width="14"'),
   );
   const disabledNavigationItems = Array.from(
     navigation.matchAll(/<(?:a|button)[^>]+disabled(?:="")?[^>]*>/g),
   );
+  const decksLink = navigationItems.find((item) => /href="\/decks"/.test(item));
   const brandTitle = markup.match(/<p class="[^"]+">MHR Dex<\/p>/)?.[0];
   const brandSubtitle = markup.match(
     /<p class="[^"]+">MHR COMPANION APP<\/p>/,
@@ -51,7 +54,9 @@ test("renders the approved legible desktop sidebar scale", () => {
     assert.match(wrapper, /md:\[&amp;&gt;svg\]:w-\[14px\]/);
   });
   assert.equal(navigationIcons.length, 3);
-  assert.equal(disabledNavigationItems.length, 2);
+  assert.equal(disabledNavigationItems.length, 1);
+  assert.ok(decksLink);
+  assert.doesNotMatch(decksLink, /disabled/);
   assert.doesNotMatch(navigation, /md:hidden">Soon<\/span>/);
   assert.match(brandTitle, /text-\[10px\]/);
   assert.match(brandTitle, /md:text-\[11px\]/);
@@ -67,4 +72,13 @@ test("marks Cards active on the root route", () => {
   assert.ok(cardsLink);
   assert.match(cardsLink, /href="\/"/);
   assert.match(cardsLink, /bg-app-surface-active/);
+});
+
+test("keeps Decks active on nested deck routes", () => {
+  const markup = renderToStaticMarkup(<Sidebar pathname="/decks/new" />);
+  const decksLink = markup.match(
+    /<a aria-current="page"[^>]+href="\/decks"[^>]*>/,
+  )?.[0];
+
+  assert.ok(decksLink);
 });

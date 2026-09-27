@@ -13,7 +13,7 @@ The site includes:
 - Deck builder (1–2 color identity rules, max 3 copies per card, deck sharing via deck code, max 50 cards in a deck) — guest decks start in the browser and can be explicitly imported into the authenticated user's cloud account (see Data Layer Rules)
 - Post-match log (scores → auto win/lose, opponent name/deck color, dice roll result, turn order, match format, date/time, location) — synced to the user's account
 
-Card browsing is public. Match logs and cloud decks require login. Guests can build decks locally in IndexedDB and can explicitly import a local deck after login. Imports create cloud copies and do not enable automatic two-way synchronization.
+Card browsing is public. Match logs and cloud decks require signing in. Guests can build decks locally in IndexedDB and can explicitly import a local deck after signing in. Imports create cloud copies and do not enable automatic two-way synchronization.
 
 Keep the implementation simple and readable.
 
@@ -24,9 +24,10 @@ Keep the implementation simple and readable.
 - Next.js (App Router)
 - TypeScript
 - Tailwind CSS
+- shadcn/ui
 - Drizzle ORM + Drizzle Kit + PostgreSQL
 - Zustand — client-only state (e.g. deck builder draft, UI state)
-- Clerk — authentication (Google & Apple Sign-In), public card browsing; access to decks remains an open decision (see Decision Register)
+- Better Auth with `@better-auth/drizzle-adapter` — email/password authentication initially; Google and Apple Sign-In are deferred
 - Browser `IndexedDB` (native API, no wrapper library) — local, browser-only storage for decks; its contract is documented in `schema_local.md`
 
 Do not introduce new major libraries unless there is a strong reason. Ask before installing anything new.
@@ -77,13 +78,13 @@ store/
 types/
 ```
 
-**app/** holds routes only, using Next.js route groups. `(auth)` contains Clerk sign-in/sign-up pages. The `(dashboard)` root page is the public Card Library at `/`; there is no separate Home page or `/cards` route. Other feature areas use their own subfolders. `api/` holds route handlers needed for things Server Actions can't cleanly do — primarily the Midtrans webhook notification handler and Clerk webhooks. Pages compose components and call server actions/queries; they should not contain large reusable UI blocks or business logic inline.
+**app/** holds routes only, using Next.js route groups. `(auth)` contains Better Auth sign-in/sign-up pages. The `(dashboard)` root page is the public Card Library at `/`; there is no separate Home page or `/cards` route. Other feature areas use their own subfolders. `api/` holds route handlers needed for things Server Actions can't cleanly do — primarily the Better Auth route and Midtrans webhook notification handler. Pages compose components and call server actions/queries; they should not contain large reusable UI blocks or business logic inline.
 
 **components/** is for reusable UI. Create a component when it is reused in multiple places, when it makes a page easier to read, or when it represents a clear UI concept. Examples for this app: `CardGridItem`, `CardDetailSheet`, `RarityBadge`, `ColorTag`, `DeckColorIndicator`, `MatchResultPill`. Do not create components too early.
 
-**lib/** holds external service helpers and server-side utilities: `db.ts` (Drizzle client singleton), `clerk.ts`, `cn.ts`, plus query/mutation functions grouped by domain (e.g. `lib/cards.ts`, `lib/decks-local.ts` for the IndexedDB layer). Server Actions live here or colocated in `app/`, never inline business logic in a page component.
+**lib/** holds external service helpers and server-side utilities: `db.ts` (Drizzle client singleton), Better Auth server/client helpers (`lib/auth.ts` and `lib/auth-client.ts`), `cn.ts`, plus query/mutation functions grouped by domain (e.g. `lib/cards.ts`, `lib/decks-local.ts` for the IndexedDB layer). Server Actions live here or colocated in `app/`, never inline business logic in a page component.
 
-**src/db/** holds the Drizzle table definitions and database client wiring. **drizzle/** holds versioned Drizzle Kit migrations. Drizzle is the implementation source of truth for server tables; `schema_cloud.md` is the cloud data contract and `schema_cloud.sql` is its executable PostgreSQL reference. Keep all three aligned when the server schema changes. The catalog uses the actual table names `card_colors`, `card_rarities`, `sets`, `cards`, `traits`, and `card_traits`. Account data uses `users`, `match_logs`, `decks`, `deck_colors`, and `deck_cards`. Cloud deck tables are active for authenticated users.
+**src/db/** holds the Drizzle table definitions and database client wiring. **drizzle/** holds versioned Drizzle Kit migrations. Drizzle is the implementation source of truth for server tables; `schema_cloud.md` is the cloud data contract and `schema_cloud.sql` is its executable PostgreSQL reference. Keep all three aligned when the server schema changes. The catalog uses the actual table names `card_colors`, `card_rarities`, `sets`, `cards`, `card_variants`, `traits`, and `card_traits`. Account data uses `users`, `match_logs`, `decks`, `deck_colors`, and `deck_cards`. Cloud deck tables are active for authenticated users.
 
 **store/** holds Zustand stores for client-only, ephemeral state (e.g. the in-progress deck builder draft before it's saved to IndexedDB, filter UI state). This is not for server data — server data is fetched via Server Components/Server Actions, not duplicated into a client store.
 
@@ -117,15 +118,15 @@ Use Next.js `<Image>` for all card artwork and static assets — never a raw `<i
 
 Centralize static/UI assets (logos, icons not covered by the icon library) under `public/` and reference them by path; don't inline base64 images in components.
 
-Card artwork itself comes from the `image_url` field on each card record (server-side), not from a centralized static import — there are too many cards for that pattern to make sense.
+Card artwork itself comes from the `image_url` field on each `card_variants` record (server-side), not from a centralized static import — there are too many card variants for that pattern to make sense.
 
 ---
 
 ## Data Layer Rules
 
-- **Cloud catalog:** `card_colors`, `card_rarities`, `sets`, `cards`, `traits`, `card_traits`.
-- **Cloud account data:** `users`, `match_logs`, `decks`, `deck_colors`, and `deck_cards`. Derive the owner from the authenticated session and enforce ownership in every read and mutation, including Server Actions and Route Handlers.
-- **Guest deck persistence:** native browser IndexedDB stores each guest deck as one record in the `decks` object store, including its colors and card entries. This lets one transaction save a complete deck atomically. After login, an explicit import creates a new cloud deck. The local record is retained and is not automatically synchronized. The structure, indexes, upgrade rules, and validation contract are defined in `schema_local.md`.
+- **Cloud catalog:** `card_colors`, `card_rarities`, `sets`, `cards`, `card_variants`, `traits`, `card_traits`.
+- **Cloud account data:** `users`, `match_logs`, `decks`, `deck_colors`, and `deck_cards`. Derive the Better Auth session, resolve the local `users` mapping through `better_auth_user_id`, and enforce ownership in every read and mutation, including Server Actions and Route Handlers.
+- **Guest deck persistence:** native browser IndexedDB stores each guest deck as one record in the `decks` object store, including its colors and card entries. This lets one transaction save a complete deck atomically. After signing in, an explicit import creates a new cloud deck. The local record is retained and is not automatically synchronized. The structure, indexes, upgrade rules, and validation contract are defined in `schema_local.md`.
 - **Browser-only boundary:** IndexedDB is accessed only from client-side code. Server Components and Server Actions must not open or depend on it. Do not introduce SQLite, a local card-catalog cache, or offline queues into the web app unless the product scope changes explicitly.
 - `schema_cloud.sql` creates a fresh PostgreSQL database. Existing cloud installations require versioned, data-preserving migrations. IndexedDB upgrades are defined separately in `schema_local.md` and run only inside `onupgradeneeded`.
 
@@ -163,7 +164,7 @@ When building a feature:
 
 ## Secrets
 
-- Never expose secret keys in client code — this includes the PostgreSQL `DATABASE_URL`, Clerk secret key, and Midtrans server key.
+- Never expose secret keys in client code — this includes the PostgreSQL `DATABASE_URL`, `BETTER_AUTH_SECRET`, and Midtrans server key.
 - Only `NEXT_PUBLIC_`-prefixed environment variables may be referenced from client components; everything else stays server-only (Server Components, Server Actions, Route Handlers). The Midtrans **client key** is the only Midtrans credential allowed in client code (needed to load Snap.js); the **server key** never leaves the server.
 - Midtrans webhook (notification) signature verification is mandatory on the webhook route handler — never trust an unverified notification payload.
 
@@ -171,9 +172,9 @@ When building a feature:
 
 ## Authentication
 
-Use Clerk. Do not build custom auth.
+Use Better Auth; do not build custom auth.
 
-Public visitors may browse the Card Library at `/` and build local decks. There is no separate Home page or `/cards` route. `/log`, cloud deck operations, and account settings require login. A logged-in user can explicitly import a valid local deck into the account. Route groups such as `(dashboard)` do not define URL paths. Enforce access at the routing boundary and independently authorize every protected server read and mutation.
+Public visitors may browse the Card Library at `/` and build local decks. There is no separate Home page or `/cards` route. `/log`, cloud deck operations, and account settings require signing in. A signed-in user can explicitly import a valid local deck into the account. Route groups such as `(dashboard)` do not define URL paths. Enforce access at the routing boundary and independently authorize every protected server read and mutation.
 
 ---
 
@@ -193,8 +194,8 @@ Before every feature:
 
 ## Database Contract
 
-- Use `cards.level` as a required integer from 1 through 6; the former name is `cost`. Preserve existing cloud values when migrating and reject invalid legacy values rather than guessing replacements. Deck records store only `cardId` and `quantity`, so catalog attributes are not duplicated in IndexedDB.
-- Card detail includes nullable integer `power`, nullable text `range`, and traits through `traits` / `card_traits`. Text range and multiple traits are provisional representations, not a confirmed game taxonomy.
+- `card_variants.level` is a required integer from 1 through 6. Rarity, level, power, range, artwork, and source-page provenance belong to `card_variants`; preserve existing cloud values when migrating and reject invalid legacy values rather than guessing replacements.
+- Deck records reference base cards and store only `cardId` and `quantity`, so variant attributes are not duplicated in decks or IndexedDB. Card detail includes variant-owned nullable integer `power`, nullable text `range`, and base-card traits through `traits` / `card_traits`. Text range and multiple traits are provisional representations, not a confirmed game taxonomy.
 - Decks have 1–2 distinct identity colors, at most 3 copies per card, and at most 50 total cards. Validate totals, color membership, and nonempty identity atomically on save in the application; row constraints alone do not enforce aggregate rules. Apply the same validation to local save and cloud import. Whether incomplete drafts may be persisted is D3.
 - Match logs preserve deck name and color snapshots even if a deck changes or is deleted. Store optional `opponent_name`, `player_score`, `opponent_score`, `turn_order`, `match_format`, and `played_at`; retain `match_date` for legacy records whose time is unknown. Do not invent a midnight timestamp for legacy data.
 - Scores are optional nonnegative integers in this revision. The result remains required (`win`, `loss`, `draw`); do not implement automatic result calculation until D4 is resolved. When both date fields exist, validate their consistency in the selected display timezone.

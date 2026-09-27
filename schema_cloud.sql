@@ -1,5 +1,51 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 --> statement-breakpoint
+CREATE TABLE "account" (
+	"id" text PRIMARY KEY,
+	"account_id" text NOT NULL,
+	"provider_id" text NOT NULL,
+	"user_id" text NOT NULL,
+	"access_token" text,
+	"refresh_token" text,
+	"id_token" text,
+	"access_token_expires_at" timestamp,
+	"refresh_token_expires_at" timestamp,
+	"scope" text,
+	"password" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "session" (
+	"id" text PRIMARY KEY,
+	"expires_at" timestamp NOT NULL,
+	"token" text NOT NULL UNIQUE,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp NOT NULL,
+	"ip_address" text,
+	"user_agent" text,
+	"user_id" text NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "user" (
+	"id" text PRIMARY KEY,
+	"name" text NOT NULL,
+	"email" text NOT NULL UNIQUE,
+	"email_verified" boolean DEFAULT false NOT NULL,
+	"image" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "verification" (
+	"id" text PRIMARY KEY,
+	"identifier" text NOT NULL,
+	"value" text NOT NULL,
+	"expires_at" timestamp NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "card_colors" (
 	"code" text PRIMARY KEY,
 	"name" text NOT NULL,
@@ -15,7 +61,6 @@ CREATE TABLE "card_rarities" (
 CREATE TABLE "sets" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 	"code" text NOT NULL UNIQUE,
-	"name" text NOT NULL,
 	"release_date" date,
 	"description" text
 );
@@ -31,18 +76,26 @@ CREATE TABLE "cards" (
 	"card_code" text NOT NULL UNIQUE,
 	"name" text NOT NULL,
 	"color_code" text NOT NULL,
-	"rarity_code" text NOT NULL,
-	"level" integer NOT NULL,
-	"power" integer,
-	"range" text,
 	"card_type" text,
 	"ability_text" text,
 	"flavor_text" text,
 	"set_id" uuid,
-	"image_url" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "cards_level_check" CHECK ("level" between 1 and 6)
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "card_variants" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+	"card_id" uuid NOT NULL,
+	"rarity_code" text NOT NULL,
+	"is_base" boolean DEFAULT false NOT NULL,
+	"level" integer NOT NULL,
+	"power" integer,
+	"range" text,
+	"image_url" text,
+	"source_page_url" text,
+	CONSTRAINT "card_variants_card_rarity_unique" UNIQUE("card_id","rarity_code"),
+	CONSTRAINT "card_variants_level_check" CHECK ("level" between 1 and 6)
 );
 --> statement-breakpoint
 CREATE TABLE "deck_cards" (
@@ -101,23 +154,31 @@ CREATE TABLE "traits" (
 --> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-	"clerk_user_id" text NOT NULL UNIQUE,
+	"clerk_user_id" text UNIQUE,
+	"better_auth_user_id" text UNIQUE,
 	"email" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE INDEX "idx_cards_color" ON "cards" ("color_code");--> statement-breakpoint
-CREATE INDEX "idx_cards_rarity" ON "cards" ("rarity_code");--> statement-breakpoint
 CREATE INDEX "idx_cards_set" ON "cards" ("set_id");--> statement-breakpoint
-CREATE INDEX "idx_cards_level" ON "cards" ("level");--> statement-breakpoint
 CREATE INDEX "idx_cards_name" ON "cards" USING gin (to_tsvector('simple', "name"));--> statement-breakpoint
+CREATE INDEX "idx_card_variants_card" ON "card_variants" ("card_id");--> statement-breakpoint
+CREATE INDEX "idx_card_variants_rarity" ON "card_variants" ("rarity_code");--> statement-breakpoint
+CREATE INDEX "idx_card_variants_level" ON "card_variants" ("level");--> statement-breakpoint
 CREATE INDEX "idx_decks_user" ON "decks" ("user_id");--> statement-breakpoint
 CREATE INDEX "idx_match_logs_user" ON "match_logs" ("user_id");--> statement-breakpoint
+CREATE INDEX "idx_auth_account_user" ON "account" ("user_id");--> statement-breakpoint
+CREATE INDEX "idx_auth_session_user" ON "session" ("user_id");--> statement-breakpoint
+CREATE INDEX "idx_auth_verification_identifier" ON "verification" ("identifier");--> statement-breakpoint
+ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "card_traits" ADD CONSTRAINT "card_traits_card_id_cards_id_fkey" FOREIGN KEY ("card_id") REFERENCES "cards"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "card_traits" ADD CONSTRAINT "card_traits_trait_id_traits_id_fkey" FOREIGN KEY ("trait_id") REFERENCES "traits"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "cards" ADD CONSTRAINT "cards_color_code_card_colors_code_fkey" FOREIGN KEY ("color_code") REFERENCES "card_colors"("code");--> statement-breakpoint
-ALTER TABLE "cards" ADD CONSTRAINT "cards_rarity_code_card_rarities_code_fkey" FOREIGN KEY ("rarity_code") REFERENCES "card_rarities"("code");--> statement-breakpoint
 ALTER TABLE "cards" ADD CONSTRAINT "cards_set_id_sets_id_fkey" FOREIGN KEY ("set_id") REFERENCES "sets"("id");--> statement-breakpoint
+ALTER TABLE "card_variants" ADD CONSTRAINT "card_variants_card_id_cards_id_fkey" FOREIGN KEY ("card_id") REFERENCES "cards"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "card_variants" ADD CONSTRAINT "card_variants_rarity_code_card_rarities_code_fkey" FOREIGN KEY ("rarity_code") REFERENCES "card_rarities"("code");--> statement-breakpoint
 ALTER TABLE "deck_cards" ADD CONSTRAINT "deck_cards_deck_id_decks_id_fkey" FOREIGN KEY ("deck_id") REFERENCES "decks"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "deck_cards" ADD CONSTRAINT "deck_cards_card_id_cards_id_fkey" FOREIGN KEY ("card_id") REFERENCES "cards"("id");--> statement-breakpoint
 ALTER TABLE "deck_colors" ADD CONSTRAINT "deck_colors_deck_id_decks_id_fkey" FOREIGN KEY ("deck_id") REFERENCES "decks"("id") ON DELETE CASCADE;--> statement-breakpoint
@@ -129,6 +190,8 @@ ALTER TABLE "match_logs" ADD CONSTRAINT "match_logs_deck_color_2_card_colors_cod
 ALTER TABLE "match_logs" ADD CONSTRAINT "match_logs_opponent_color_1_card_colors_code_fkey" FOREIGN KEY ("opponent_color_1") REFERENCES "card_colors"("code");--> statement-breakpoint
 ALTER TABLE "match_logs" ADD CONSTRAINT "match_logs_opponent_color_2_card_colors_code_fkey" FOREIGN KEY ("opponent_color_2") REFERENCES "card_colors"("code");
 --> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_better_auth_user_id_user_id_fkey" FOREIGN KEY ("better_auth_user_id") REFERENCES "user"("id") ON DELETE CASCADE;
+--> statement-breakpoint
 INSERT INTO "card_colors" ("code", "name", "sort_order", "is_active") VALUES
   ('blue', 'Blue', 1, true),
   ('red', 'Red', 2, true),
@@ -139,13 +202,13 @@ INSERT INTO "card_colors" ("code", "name", "sort_order", "is_active") VALUES
 ON CONFLICT ("code") DO NOTHING;
 --> statement-breakpoint
 INSERT INTO "card_rarities" ("code", "sort_order") VALUES
-  ('ER', 1),
-  ('GR', 2),
-  ('MR', 3),
-  ('PR', 4),
+  ('UR', 1),
+  ('TR', 2),
+  ('SR', 3),
+  ('SEC', 4),
   ('R', 5),
-  ('SEC', 6),
-  ('SR', 7),
-  ('TR', 8),
-  ('UR', 9)
+  ('PR', 6),
+  ('MR', 7),
+  ('GR', 8),
+  ('ER', 9)
 ON CONFLICT ("code") DO NOTHING;

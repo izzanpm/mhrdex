@@ -6,7 +6,7 @@ MHR Dex Web is an unofficial companion application for the Marvel Hero Rush Trad
 
 ## 2. Overview
 
-MHR Dex Web helps players find card information, build decks, and record match results. The product runs as a web application built with Next.js. Card and match data use PostgreSQL through Drizzle ORM. Guest decks remain in the user's browser through IndexedDB. After login, the user can explicitly import a local deck into the cloud account. Cloud decks are then managed on the server without automatic two-way synchronization.
+MHR Dex Web helps players find card information, build decks, and record match results. The product runs as a web application built with Next.js. Card and match data use PostgreSQL through Drizzle ORM. Guest decks remain in the user's browser through IndexedDB. After signing in, the user can explicitly import a local deck into the cloud account. Cloud decks are then managed on the server without automatic two-way synchronization.
 
 The product supports three main activities:
 
@@ -86,7 +86,7 @@ PostgreSQL is the source of truth for the catalog. The browser does not maintain
 - A deck is stored as one record containing its metadata, colors, and card entries.
 - Saving the complete record in one transaction keeps a deck update atomic.
 - Deck records contain card identifiers and quantities. Current card details are resolved from the cloud catalog.
-- Guest decks stay in IndexedDB until the user chooses to import one after login.
+- Guest decks stay in IndexedDB until the user chooses to import one after signing in.
 - Importing creates a cloud deck under the authenticated account. It does not merge, overwrite, or delete the local deck.
 - Authenticated users create and edit cloud decks. Changes to a cloud deck do not update the original local copy.
 

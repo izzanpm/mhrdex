@@ -20,7 +20,7 @@ MHR Dex combines public card browsing, guest-local deck building, authenticated 
 
 ## Operating Context
 
-Players may browse cards without an account and build a guest deck in the browser. After login, they can explicitly import a valid local deck as a new cloud copy. Match logs and cloud deck operations use the authenticated account. Local decks are not automatically synchronized with cloud copies.
+Players may browse cards without an account and build a guest deck in the browser. After signing in, they can explicitly import a valid local deck as a new cloud copy. Match logs and cloud deck operations use the authenticated account. Local decks are not automatically synchronized with cloud copies.
 
 ## Capabilities and Constraints
 
