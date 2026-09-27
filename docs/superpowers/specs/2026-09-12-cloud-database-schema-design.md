@@ -66,7 +66,7 @@ No speculative indexes or Drizzle relations are added.
 
 - `CREATE EXTENSION IF NOT EXISTS pgcrypto` before tables that use `gen_random_uuid()`.
 - Seed rows for `card_colors`: blue, red, yellow, green, purple, and orange. Purple and orange are inactive.
-- Seed rows for `card_rarities`: ER, GR, MR, PR, R, SEC, SR, TR, and UR in the documented priority order.
+- Seed rows for `card_rarities`: UR, TR, SR, SEC, R, PR, MR, GR, and ER in ascending `sort_order`.
 
 The initial migration targets an empty database. It does not include a legacy `cost` to `level` rename because the user confirmed there is no existing database to preserve.
 

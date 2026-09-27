@@ -5,6 +5,7 @@ import { getTableName } from "drizzle-orm";
 import { getTableConfig } from "drizzle-orm/pg-core";
 
 import {
+  account,
   cardColors,
   cardRarities,
   cardSets,
@@ -15,11 +16,19 @@ import {
   deckColors,
   decks,
   matchLogs,
+  relations,
+  session,
   traits,
+  user,
   users,
+  verification,
 } from "./schema";
 
 const tables = [
+  user,
+  session,
+  account,
+  verification,
   cardColors,
   cardRarities,
   cardSets,
@@ -36,6 +45,10 @@ const tables = [
 
 test("defines the cloud tables from the ERD", () => {
   assert.deepEqual(tables.map(getTableName), [
+    "user",
+    "session",
+    "account",
+    "verification",
     "card_colors",
     "card_rarities",
     "sets",
@@ -90,6 +103,7 @@ test("defines the required checks and indexes", () => {
       "id",
       "card_id",
       "rarity_code",
+      "is_base",
       "level",
       "power",
       "range",
@@ -97,6 +111,12 @@ test("defines the required checks and indexes", () => {
       "source_page_url",
     ],
   );
+  const baseColumn = variantsConfig.columns.find(
+    (column) => column.name === "is_base",
+  );
+  assert.ok(baseColumn);
+  assert.equal(baseColumn.notNull, true);
+  assert.equal(baseColumn.hasDefault, true);
   assert.ok(
     variantsConfig.uniqueConstraints.some(
       (constraint) =>
@@ -130,4 +150,83 @@ test("defines the required checks and indexes", () => {
     getTableConfig(deckCards).checks.map(({ name }) => name),
     ["deck_cards_quantity_check"],
   );
+});
+
+test("defines the Better Auth tables and application identity mapping", () => {
+  assert.deepEqual(getTableConfig(user).columns.map(({ name }) => name), [
+    "id",
+    "name",
+    "email",
+    "email_verified",
+    "image",
+    "created_at",
+    "updated_at",
+  ]);
+  assert.ok(
+    getTableConfig(session).indexes.some(
+      ({ config }) => config.name === "idx_auth_session_user",
+    ),
+  );
+  assert.ok(
+    getTableConfig(account).indexes.some(
+      ({ config }) => config.name === "idx_auth_account_user",
+    ),
+  );
+  assert.ok(
+    getTableConfig(verification).indexes.some(
+      ({ config }) => config.name === "idx_auth_verification_identifier",
+    ),
+  );
+  assert.deepEqual(
+    getTableConfig(users).columns.map(({ name }) => name),
+    ["id", "clerk_user_id", "better_auth_user_id", "email", "created_at"],
+  );
+
+  for (const table of [session, account]) {
+    assert.ok(
+      getTableConfig(table).foreignKeys.some(({ reference }) => {
+        const { columns, foreignColumns, foreignTable } = reference();
+        return (
+          getTableName(foreignTable) === "user" &&
+          columns.map(({ name }) => name).join(",") === "user_id" &&
+          foreignColumns.map(({ name }) => name).join(",") === "id"
+        );
+      }),
+    );
+  }
+
+  assert.ok(
+    getTableConfig(users).foreignKeys.some(({ reference }) => {
+      const { columns, foreignColumns, foreignTable } = reference();
+      return (
+        getTableName(foreignTable) === "user" &&
+        columns.map(({ name }) => name).join(",") === "better_auth_user_id" &&
+        foreignColumns.map(({ name }) => name).join(",") === "id"
+      );
+    }),
+  );
+
+  for (const columnName of ["clerk_user_id", "better_auth_user_id"]) {
+    assert.equal(
+      getTableConfig(users).columns.find(({ name }) => name === columnName)
+        ?.notNull,
+      false,
+    );
+  }
+});
+
+test("defines the Better Auth Relations v2 mapping", () => {
+  assert.deepEqual(Object.keys(relations), [
+    "user",
+    "session",
+    "account",
+    "verification",
+  ]);
+  assert.deepEqual(Object.keys(relations.user.relations), [
+    "sessions",
+    "accounts",
+  ]);
+  assert.deepEqual(Object.keys(relations.session.relations), ["user"]);
+  assert.deepEqual(Object.keys(relations.account.relations), ["user"]);
+  assert.deepEqual(Object.keys(relations.verification.relations), []);
 });

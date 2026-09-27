@@ -24,6 +24,12 @@ erDiagram
   CARDS ||--o{ CARD_VARIANTS : has
   CARDS ||--o{ CARD_TRAITS : has
   TRAITS ||--o{ CARD_TRAITS : labels
+  AUTH_USER ||--o{ AUTH_SESSION : owns
+  AUTH_USER ||--o{ AUTH_ACCOUNT : owns
+  AUTH_USER o|--o| USERS : maps_to
+  AUTH_VERIFICATION {
+    text id
+  }
   USERS ||--o{ MATCH_LOGS : owns
   USERS ||--o{ DECKS : owns
   DECKS ||--o{ DECK_COLORS : identifies
@@ -52,7 +58,7 @@ Seed values are `blue`, `red`, `yellow`, `green`, `purple`, and `orange`. Purple
 | `code` | `text` | Primary key |
 | `sort_order` | `integer` | Required and unique |
 
-Seed values, from highest sort priority to lowest, are `ER`, `GR`, `MR`, `PR`, `R`, `SEC`, `SR`, `TR`, and `UR`.
+Seed values use `UR` as sort order 1 and `ER` as sort order 9: `UR`, `TR`, `SR`, `SEC`, `R`, `PR`, `MR`, `GR`, and `ER`.
 
 ### `sets`
 
@@ -89,13 +95,14 @@ Each row represents a rarity and artwork variant of a base card. Decks reference
 | `id` | `uuid` | Primary key; generated |
 | `card_id` | `uuid` | Required; references `cards.id`; cascades on delete |
 | `rarity_code` | `text` | Required; references `card_rarities.code` |
+| `is_base` | `boolean` | Required; defaults to `false`; marks the variant with the lowest `card_rarities.sort_order` for this card |
 | `level` | `integer` | Required; value from 1 through 6 |
 | `power` | `integer` | Optional |
 | `range` | `text` | Optional; final taxonomy remains open in D3 |
 | `image_url` | `text` | Optional permanent local or hosted path |
 | `source_page_url` | `text` | Optional scraper provenance |
 
-The (`card_id`, `rarity_code`) pair is unique. Indexes: `idx_card_variants_card`, `idx_card_variants_rarity`, and `idx_card_variants_level`.
+The (`card_id`, `rarity_code`) pair is unique. The importer marks the variant whose rarity has the lowest `card_rarities.sort_order` as the base variant. Indexes: `idx_card_variants_card`, `idx_card_variants_rarity`, and `idx_card_variants_level`.
 
 ### `traits`
 
@@ -113,6 +120,72 @@ The (`card_id`, `rarity_code`) pair is unique. Indexes: `idx_card_variants_card`
 
 The composite primary key is (`card_id`, `trait_id`).
 
+## Authentication
+
+Better Auth uses the following tables. Their names, text identifiers, timestamp types, and indexes match the Drizzle Better Auth adapter schema.
+
+### `user`
+
+| Column | Type | Rules |
+| --- | --- | --- |
+| `id` | `text` | Primary key |
+| `name` | `text` | Required |
+| `email` | `text` | Required and unique |
+| `email_verified` | `boolean` | Required; defaults to `false` |
+| `image` | `text` | Optional |
+| `created_at` | `timestamp` | Required; defaults to `now()` |
+| `updated_at` | `timestamp` | Required; defaults to `now()` |
+
+Indexes and constraints: primary key on `id` and unique constraint on `email`.
+
+### `session`
+
+| Column | Type | Rules |
+| --- | --- | --- |
+| `id` | `text` | Primary key |
+| `expires_at` | `timestamp` | Required |
+| `token` | `text` | Required and unique |
+| `created_at` | `timestamp` | Required; defaults to `now()` |
+| `updated_at` | `timestamp` | Required |
+| `ip_address` | `text` | Optional |
+| `user_agent` | `text` | Optional |
+| `user_id` | `text` | Required; references `user.id`; cascades on delete |
+
+Indexes and constraints: primary key on `id`, unique constraint on `token`, and `idx_auth_session_user` on `user_id`.
+
+### `account`
+
+| Column | Type | Rules |
+| --- | --- | --- |
+| `id` | `text` | Primary key |
+| `account_id` | `text` | Required |
+| `provider_id` | `text` | Required |
+| `user_id` | `text` | Required; references `user.id`; cascades on delete |
+| `access_token` | `text` | Optional |
+| `refresh_token` | `text` | Optional |
+| `id_token` | `text` | Optional |
+| `access_token_expires_at` | `timestamp` | Optional |
+| `refresh_token_expires_at` | `timestamp` | Optional |
+| `scope` | `text` | Optional |
+| `password` | `text` | Optional |
+| `created_at` | `timestamp` | Required; defaults to `now()` |
+| `updated_at` | `timestamp` | Required |
+
+Indexes and constraints: primary key on `id` and `idx_auth_account_user` on `user_id`.
+
+### `verification`
+
+| Column | Type | Rules |
+| --- | --- | --- |
+| `id` | `text` | Primary key |
+| `identifier` | `text` | Required |
+| `value` | `text` | Required |
+| `expires_at` | `timestamp` | Required |
+| `created_at` | `timestamp` | Required; defaults to `now()` |
+| `updated_at` | `timestamp` | Required; defaults to `now()` |
+
+Indexes and constraints: primary key on `id` and `idx_auth_verification_identifier` on `identifier`.
+
 ## Users and account data
 
 ### `users`
@@ -120,11 +193,12 @@ The composite primary key is (`card_id`, `trait_id`).
 | Column | Type | Rules |
 | --- | --- | --- |
 | `id` | `uuid` | Primary key; generated |
-| `clerk_user_id` | `text` | Required and unique |
+| `clerk_user_id` | `text` | Optional (nullable) and unique legacy Clerk identifier |
+| `better_auth_user_id` | `text` | Optional (nullable) and unique; references Better Auth `user.id`; cascades on delete |
 | `email` | `text` | Optional |
 | `created_at` | `timestamptz` | Required; defaults to `now()` |
 
-Every account-scoped query and mutation must derive the user identity from the authenticated Clerk session.
+Every protected query and mutation must derive the identity from the authenticated Better Auth session, resolve the local `users` mapping through `better_auth_user_id`, and enforce ownership before accessing decks or match logs. Existing Clerk IDs are legacy values and are not automatically linked to Better Auth identities.
 
 ### `match_logs`
 

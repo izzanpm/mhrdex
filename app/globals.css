@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 :root {
   --background: #101112;
@@ -42,6 +44,10 @@
   --app-amber-brand: #f0ad4e;
   --app-amber: #e3ad4e;
   --app-amber-bar: #dfa84b;
+  --app-card-blue: #4285f4;
+  --app-card-red: #f04458;
+  --app-card-yellow: #f0c64e;
+  --app-card-green: #45c579;
   --app-progress-track: #3a3b3d;
   --app-image-surface: #252729;
   --app-image-line: #37393b;
@@ -53,6 +59,43 @@
   --app-danger-hover: #3a2421;
   --app-overlay: #000000;
   --app-shadow: #000000;
+  --login-canvas: #111213;
+  --login-surface: #242526;
+  --login-border: #303134;
+  --login-text: #f2f2f2;
+  --login-muted: #9a9a9d;
+  --login-accent: #f15b3a;
+  --radius: 0.5625rem;
+  --card: var(--app-surface-card);
+  --card-foreground: var(--app-text-card);
+  --popover: var(--app-surface-card);
+  --popover-foreground: var(--app-text-card);
+  --primary: var(--app-accent);
+  --primary-foreground: var(--app-canvas);
+  --secondary: var(--app-surface);
+  --secondary-foreground: var(--app-text);
+  --muted: var(--app-surface-input);
+  --muted-foreground: var(--app-text-muted);
+  --accent: var(--app-surface-active);
+  --accent-foreground: var(--app-text);
+  --destructive: var(--app-danger-border);
+  --destructive-foreground: var(--app-danger-text);
+  --border: var(--app-border);
+  --input: var(--app-border);
+  --ring: var(--app-accent);
+  --chart-1: var(--app-accent);
+  --chart-2: var(--app-amber);
+  --chart-3: var(--app-accent-deep);
+  --chart-4: var(--app-text-muted);
+  --chart-5: var(--app-text-body);
+  --sidebar: var(--app-sidebar);
+  --sidebar-foreground: var(--app-text-panel);
+  --sidebar-primary: var(--app-accent);
+  --sidebar-primary-foreground: var(--app-canvas);
+  --sidebar-accent: var(--app-surface-active);
+  --sidebar-accent-foreground: var(--app-text);
+  --sidebar-border: var(--app-sidebar-border);
+  --sidebar-ring: var(--app-accent);
 }
 
 @theme inline {
@@ -97,6 +140,10 @@
   --color-app-amber-brand: var(--app-amber-brand);
   --color-app-amber: var(--app-amber);
   --color-app-amber-bar: var(--app-amber-bar);
+  --color-app-card-blue: var(--app-card-blue);
+  --color-app-card-red: var(--app-card-red);
+  --color-app-card-yellow: var(--app-card-yellow);
+  --color-app-card-green: var(--app-card-green);
   --color-app-progress-track: var(--app-progress-track);
   --color-app-image-surface: var(--app-image-surface);
   --color-app-image-line: var(--app-image-line);
@@ -108,8 +155,68 @@
   --color-app-danger-hover: var(--app-danger-hover);
   --color-app-overlay: var(--app-overlay);
   --color-app-shadow: var(--app-shadow);
+  --color-login-canvas: var(--login-canvas);
+  --color-login-surface: var(--login-surface);
+  --color-login-border: var(--login-border);
+  --color-login-text: var(--login-text);
+  --color-login-muted: var(--login-muted);
+  --color-login-accent: var(--login-accent);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-login-sans: var(--font-plus-jakarta);
+  --font-login-mono: var(--font-fira-mono);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 * {

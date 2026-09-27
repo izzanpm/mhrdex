@@ -365,15 +365,15 @@ INSERT INTO "card_colors" ("code", "name", "sort_order", "is_active") VALUES
 ON CONFLICT ("code") DO NOTHING;
 --> statement-breakpoint
 INSERT INTO "card_rarities" ("code", "sort_order") VALUES
-  ('ER', 1),
-  ('GR', 2),
-  ('MR', 3),
-  ('PR', 4),
+  ('UR', 1),
+  ('TR', 2),
+  ('SR', 3),
+  ('SEC', 4),
   ('R', 5),
-  ('SEC', 6),
-  ('SR', 7),
-  ('TR', 8),
-  ('UR', 9)
+  ('PR', 6),
+  ('MR', 7),
+  ('GR', 8),
+  ('ER', 9)
 ON CONFLICT ("code") DO NOTHING;
 ```
 

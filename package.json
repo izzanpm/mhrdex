@@ -5,18 +5,27 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "test": "tsx --test architecture.test.ts src/db/schema.test.ts lib/sidebar-data.test.ts components/sidebar.test.tsx components/card-library.test.tsx scripts/cards-import.test.ts",
+    "test": "tsx --test architecture.test.ts src/db/schema.test.ts lib/auth-submit.test.ts lib/auth-guard.test.ts lib/sidebar-data.test.ts lib/sign-up-validation.test.ts lib/deck-validation.test.ts lib/decks.test.ts components/app-icon.test.tsx components/sidebar.test.tsx components/card-library.test.tsx components/sign-in-screen.test.tsx components/sign-up-screen.test.tsx \"app/(auth)/sign-in/page.test.tsx\" \"app/(dashboard)/decks/page.test.tsx\" scripts/cards-import.test.ts scripts/seed-decks.test.ts",
     "import:cards": "tsx scripts/import-cards.ts",
+    "seed:decks": "tsx scripts/seed-decks.ts",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@base-ui/react": "^1.8.0",
+    "@better-auth/drizzle-adapter": "^1.7.5",
+    "better-auth": "^1.7.5",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cn": "^0.3.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^1.0.0-rc.4",
+    "lucide-react": "^1.47.0",
     "next": "16.3.4",
     "pg": "^8.23.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -27,8 +36,10 @@
     "drizzle-kit": "^1.0.0-rc.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "shadcn": "^4.21.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
+    "tw-animate-css": "^1.4.0",
     "typescript": "^5"
   },
   "allowScripts": {

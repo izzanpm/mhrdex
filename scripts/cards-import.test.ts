@@ -5,6 +5,7 @@ import path from "node:path";
 import test, { afterEach } from "node:test";
 
 import {
+  getBaseRarityCode,
   getVariantImageName,
   parseCatalog,
   prepareCardImages,
@@ -115,6 +116,56 @@ test("parses a complete supported catalog", () => {
 
   assert.equal(catalog.cards[0].variants[0].rarityCode, "MR");
   assert.equal(catalog.cards[0].abilityText, "An ability.");
+});
+
+test("selects UR as the base variant with the canonical rarity order", () => {
+  assert.equal(
+    getBaseRarityCode(
+      [{ rarityCode: "UR" }, { rarityCode: "MR" }, { rarityCode: "ER" }],
+      new Map([
+        ["UR", 1],
+        ["MR", 7],
+        ["ER", 9],
+      ]),
+    ),
+    "UR",
+  );
+});
+
+test("keeps the canonical rarity seed order in the cloud schema", async () => {
+  const schema = await readFile(
+    new URL("../schema_cloud.sql", import.meta.url),
+    "utf8",
+  );
+  for (const [code, sortOrder] of [
+    ["UR", 1],
+    ["TR", 2],
+    ["SR", 3],
+    ["SEC", 4],
+    ["R", 5],
+    ["PR", 6],
+    ["MR", 7],
+    ["GR", 8],
+    ["ER", 9],
+  ] as const) {
+    assert.match(schema, new RegExp(`\\('${code}', ${sortOrder}\\)`));
+  }
+});
+
+test("resets stale base flags before importing a card's variants", async () => {
+  const source = await readFile(
+    new URL("./cards-import.ts", import.meta.url),
+    "utf8",
+  );
+  const resetIndex = source.indexOf(".update(cardVariants)");
+  const insertIndex = source.indexOf(".insert(cardVariants)");
+
+  assert.ok(resetIndex >= 0);
+  assert.ok(insertIndex > resetIndex);
+  assert.match(
+    source.slice(resetIndex, insertIndex),
+    /\.set\(\{ isBase: false \}\)/,
+  );
 });
 
 test("accepts every seeded color", () => {
@@ -321,7 +372,7 @@ test("reuses an existing nonempty deterministic image", async () => {
 
 test("limits image downloads to batches of eight", async () => {
   const outputDirectory = await mkdtemp(path.join(tmpdir(), "mhr-cards-"));
-  const rarityCodes = ["ER", "GR", "MR", "PR", "R", "SEC", "SR", "TR", "UR"];
+  const rarityCodes = ["UR", "TR", "SR", "SEC", "R", "PR", "MR", "GR", "ER"];
   const catalog: ScrapedCatalog = {
     ...parseCatalog(validCatalog),
     cards: [

@@ -4,6 +4,7 @@ import path from "node:path";
 
 import {
   cards,
+  cardRarities,
   cardSets,
   cardTraits,
   cardVariants,
@@ -69,6 +70,29 @@ export type ImportCounts = {
   traits: number;
   cardTraits: number;
 };
+
+export function getBaseRarityCode(
+  variants: readonly Pick<ScrapedVariant, "rarityCode">[],
+  raritySortOrders: ReadonlyMap<string, number>,
+): string {
+  if (variants.length === 0) throw new Error("card must have a base variant");
+
+  let baseRarityCode: string | null = null;
+  let baseSortOrder: number | null = null;
+
+  for (const variant of variants) {
+    const sortOrder = raritySortOrders.get(variant.rarityCode);
+    if (sortOrder === undefined) {
+      throw new Error(`missing sort order for rarity ${variant.rarityCode}`);
+    }
+    if (baseSortOrder === null || sortOrder < baseSortOrder) {
+      baseRarityCode = variant.rarityCode;
+      baseSortOrder = sortOrder;
+    }
+  }
+
+  return baseRarityCode!;
+}
 
 export function sanitizeErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : "Unknown import error";
@@ -699,6 +723,13 @@ export async function importCatalog(
   const { db } = await import("../src/db/client");
 
   await db.transaction(async (tx) => {
+    const rarityRows = await tx
+      .select({ code: cardRarities.code, sortOrder: cardRarities.sortOrder })
+      .from(cardRarities);
+    const raritySortOrders = new Map(
+      rarityRows.map((row) => [row.code, row.sortOrder]),
+    );
+
     const setRows = await tx
       .insert(cardSets)
       .values(setCodes.map((code) => ({ code })))
@@ -722,6 +753,7 @@ export async function importCatalog(
     for (const card of catalog.cards) {
       const setId = setIds.get(card.setCode);
       if (setId === undefined) throw new Error(`missing set row for ${card.setCode}`);
+      const baseRarityCode = getBaseRarityCode(card.variants, raritySortOrders);
 
       const [cardRow] = await tx
         .insert(cards)
@@ -748,12 +780,18 @@ export async function importCatalog(
         })
         .returning({ id: cards.id });
 
+      await tx
+        .update(cardVariants)
+        .set({ isBase: false })
+        .where(eq(cardVariants.cardId, cardRow.id));
+
       for (const variant of card.variants) {
         await tx
           .insert(cardVariants)
           .values({
             cardId: cardRow.id,
             rarityCode: variant.rarityCode,
+            isBase: variant.rarityCode === baseRarityCode,
             level: variant.level,
             power: variant.power,
             range: variant.range === null ? null : String(variant.range),
@@ -763,6 +801,7 @@ export async function importCatalog(
           .onConflictDoUpdate({
             target: [cardVariants.cardId, cardVariants.rarityCode],
             set: {
+              isBase: variant.rarityCode === baseRarityCode,
               level: variant.level,
               power: variant.power,
               range: variant.range === null ? null : String(variant.range),

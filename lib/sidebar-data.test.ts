@@ -11,10 +11,10 @@ test("shared sidebar keeps navigation destinations honest", () => {
     })),
     [
       { href: "/", key: "cards" },
-      { href: undefined, key: "decks" },
+      { href: "/decks", key: "decks" },
       { href: undefined, key: "match" },
     ],
   );
-  assert.equal(sidebarNavigationItems[1].comingSoon, true);
+  assert.equal(sidebarNavigationItems[1].comingSoon, undefined);
   assert.equal(sidebarNavigationItems[2].comingSoon, true);
 });

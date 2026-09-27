@@ -8,15 +8,27 @@ const projectPath = (...segments: string[]) => path.join(process.cwd(), ...segme
 test("keeps implemented features in the documented architecture folders", () => {
   const expectedFiles = [
     ["app", "(dashboard)", "page.tsx"],
+    ["app", "(dashboard)", "decks", "page.tsx"],
     ["app", "(dashboard)", "loading.tsx"],
     ["components", "app-icon.tsx"],
+    ["components", "account-controls.tsx"],
     ["components", "card-grid-item.tsx"],
     ["components", "card-library.tsx"],
+    ["components", "sign-in-screen.tsx"],
+    ["components", "sign-up-screen.tsx"],
     ["components", "sidebar.tsx"],
+    ["app", "(auth)", "sign-in", "page.tsx"],
+    ["app", "(auth)", "sign-up", "page.tsx"],
     ["lib", "cards.ts"],
+    ["app", "api", "auth", "[...all]", "route.ts"],
+    ["lib", "auth.ts"],
+    ["lib", "auth-client.ts"],
+    ["lib", "auth-guard.ts"],
+    ["lib", "sign-up-validation.ts"],
     ["src", "db", "client.ts"],
     ["src", "db", "schema.ts"],
     ["types", "card.ts"],
+    ["types", "user.ts"],
   ];
 
   expectedFiles.forEach((segments) => {

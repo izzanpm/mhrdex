@@ -1,21 +1,69 @@
 import { asc, eq } from "drizzle-orm";
 
 import { db } from "@/src/db/client";
-import { cardRarities, cardVariants, cards } from "@/src/db/schema";
+import {
+  cardRarities,
+  cardSets,
+  cardTraits,
+  cardVariants,
+  cards,
+  traits,
+} from "@/src/db/schema";
 import type { CardListItem } from "@/types/card";
 
-export function getCards(): Promise<CardListItem[]> {
-  return db
+export async function getCards(): Promise<CardListItem[]> {
+  const rows = await db
     .select({
       id: cardVariants.id,
+      cardId: cards.id,
       cardCode: cards.cardCode,
       name: cards.name,
       cardType: cards.cardType,
+      colorCode: cards.colorCode,
       rarityCode: cardVariants.rarityCode,
+      isBase: cardVariants.isBase,
+      level: cardVariants.level,
+      range: cardVariants.range,
       imageUrl: cardVariants.imageUrl,
+      setCode: cardSets.code,
+      traitName: traits.name,
     })
     .from(cards)
     .innerJoin(cardVariants, eq(cardVariants.cardId, cards.id))
     .innerJoin(cardRarities, eq(cardRarities.code, cardVariants.rarityCode))
+    .leftJoin(cardSets, eq(cardSets.id, cards.setId))
+    .leftJoin(cardTraits, eq(cardTraits.cardId, cards.id))
+    .leftJoin(traits, eq(traits.id, cardTraits.traitId))
     .orderBy(asc(cards.cardCode), asc(cardRarities.sortOrder));
+
+  const cardsByVariant = new Map<string, CardListItem>();
+
+  for (const row of rows) {
+    const existingCard = cardsByVariant.get(row.id);
+
+    if (existingCard) {
+      if (row.traitName && !existingCard.traitNames?.includes(row.traitName)) {
+        existingCard.traitNames?.push(row.traitName);
+      }
+      continue;
+    }
+
+    cardsByVariant.set(row.id, {
+      cardId: row.cardId,
+      cardCode: row.cardCode,
+      cardType: row.cardType,
+      colorCode: row.colorCode,
+      id: row.id,
+      imageUrl: row.imageUrl,
+      isBase: row.isBase,
+      level: row.level,
+      name: row.name,
+      range: row.range,
+      rarityCode: row.rarityCode,
+      setCode: row.setCode,
+      traitNames: row.traitName ? [row.traitName] : [],
+    });
+  }
+
+  return [...cardsByVariant.values()];
 }

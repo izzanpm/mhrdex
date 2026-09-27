@@ -42,12 +42,15 @@ export function Sidebar({
   activeCurrent = "page",
   items = sidebarNavigationItems,
   onNavigate,
+  pathname: pathnameOverride,
 }: {
   activeCurrent?: "location" | "page";
   items?: readonly SidebarNavigationItem[];
   onNavigate?: (key: SidebarNavKey) => void;
+  pathname?: string;
 }) {
-  const pathname = usePathname() ?? "/";
+  const currentPathname = usePathname();
+  const pathname = pathnameOverride ?? currentPathname ?? "/";
 
   return (
     <aside className="border-b border-app-sidebar-border bg-app-sidebar md:fixed md:inset-y-0 md:left-0 md:z-10 md:flex md:w-[232px] md:flex-col md:border-b-0 md:border-r">
@@ -67,7 +70,9 @@ export function Sidebar({
 
       <nav className="grid grid-cols-2 gap-1 border-t border-app-sidebar-border px-2 py-2 sm:grid-cols-4 md:mt-[102px] md:block md:border-t-0 md:px-5 md:py-0">
         {items.map((item) => {
-          const isActive = item.href === pathname;
+          const isActive =
+            item.href === pathname ||
+            (item.href !== "/" && pathname.startsWith(`${item.href}/`));
           const className = `relative flex min-h-11 items-center justify-center gap-2 rounded-[5px] px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent md:h-[44px] md:min-h-0 md:justify-start md:rounded-[4px] md:px-[12px] ${
             isActive
               ? "bg-app-surface-active text-app-accent-active before:absolute before:bottom-[3px] before:left-0 before:top-[3px] before:w-[2px] before:bg-app-accent"

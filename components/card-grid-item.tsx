@@ -1,8 +1,17 @@
 import Image from "next/image";
 
+import { AppIcon } from "@/components/app-icon";
 import type { CardListItem } from "@/types/card";
 
-export function CardGridItem({ card }: { card: CardListItem }) {
+export function CardGridItem({
+  card,
+  onClick,
+  showDeckControls = false,
+}: {
+  card: CardListItem;
+  onClick?: () => void;
+  showDeckControls?: boolean;
+}) {
   const localImage =
     card.imageUrl?.startsWith("/") && !card.imageUrl.startsWith("//")
       ? card.imageUrl
@@ -11,7 +20,7 @@ export function CardGridItem({ card }: { card: CardListItem }) {
   return (
     <article
       aria-label={`${card.name}, ${card.cardCode}, ${card.rarityCode}`}
-      className="relative aspect-[3/4] min-w-0 overflow-hidden rounded-[10px] border border-app-border-image bg-app-image-surface"
+      className="group relative aspect-[744/1040] min-w-0 overflow-hidden rounded-[10px] border border-app-border-image bg-app-image-surface"
     >
       {localImage ? (
         <Image
@@ -29,9 +38,34 @@ export function CardGridItem({ card }: { card: CardListItem }) {
       )}
 
       <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-app-shadow/55 to-transparent" />
-      <p className="absolute bottom-[15px] left-[14px] font-mono text-[8px] uppercase tracking-[0.04em] text-app-text-muted">
-        {card.cardType ?? "Card"}
-      </p>
+      {showDeckControls ? (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-2 z-10 flex justify-center gap-1.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100"
+          data-deck-controls="true"
+        >
+          <span
+            className="flex size-7 items-center justify-center rounded-full border border-app-border-control bg-app-surface-card/90 text-app-text-panel"
+            data-deck-control="minus"
+          >
+            <AppIcon name="minus" size={12} />
+          </span>
+          <span
+            className="flex size-7 items-center justify-center rounded-full border border-app-border-control bg-app-surface-card/90 text-app-text-panel"
+            data-deck-control="plus"
+          >
+            <AppIcon name="plus" size={12} />
+          </span>
+        </div>
+      ) : null}
+      {onClick ? (
+        <button
+          aria-label={`Open details for ${card.name}, ${card.cardCode}, ${card.rarityCode}`}
+          className="absolute inset-0 rounded-[10px] outline-none focus-visible:ring-2 focus-visible:ring-app-accent focus-visible:ring-inset"
+          onClick={onClick}
+          type="button"
+        />
+      ) : null}
     </article>
   );
 }

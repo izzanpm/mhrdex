@@ -13,7 +13,7 @@ export type SidebarNavigationItem = {
 export const sidebarNavigationItems: readonly SidebarNavigationItem[] = [
   { href: "/", icon: "cards", key: "cards", label: "Cards" },
   {
-    comingSoon: true,
+    href: "/decks",
     icon: "decks",
     key: "decks",
     label: "Decks",
