@@ -31,6 +31,10 @@ test("renders the approved legible desktop sidebar scale", () => {
     navigation.matchAll(/<(?:a|button)[^>]+disabled(?:="")?[^>]*>/g),
   );
   const decksLink = navigationItems.find((item) => /href="\/decks"/.test(item));
+  const matchLink = navigationItems.find((item) => /href="\/match"/.test(item));
+  const simulatorLink = navigationItems.find((item) =>
+    /href="\/simulator"/.test(item),
+  );
   const brandTitle = markup.match(/<p class="[^"]+">MHR Dex<\/p>/)?.[0];
   const brandSubtitle = markup.match(
     /<p class="[^"]+">MHR COMPANION APP<\/p>/,
@@ -42,21 +46,25 @@ test("renders the approved legible desktop sidebar scale", () => {
   assert.match(markup, /MHR COMPANION APP/);
   assert.doesNotMatch(markup, /Hero Rush/);
   assert.match(asideTag, /md:w-\[232px\]/);
-  assert.equal(navigationItems.length, 3);
+  assert.equal(navigationItems.length, 4);
   navigationItems.forEach((item) => {
     assert.match(item, /min-h-11/);
     assert.match(item, /md:h-\[44px\]/);
   });
-  assert.deepEqual(navigationLabels, ["Cards", "Decks", "Match"]);
-  assert.equal(iconWrappers.length, 3);
+  assert.deepEqual(navigationLabels, ["Cards", "Decks", "Match", "SIM"]);
+  assert.equal(iconWrappers.length, 4);
   iconWrappers.forEach((wrapper) => {
     assert.match(wrapper, /md:\[&amp;&gt;svg\]:h-\[14px\]/);
     assert.match(wrapper, /md:\[&amp;&gt;svg\]:w-\[14px\]/);
   });
-  assert.equal(navigationIcons.length, 3);
-  assert.equal(disabledNavigationItems.length, 1);
+  assert.equal(navigationIcons.length, 4);
+  assert.equal(disabledNavigationItems.length, 0);
   assert.ok(decksLink);
+  assert.ok(matchLink);
+  assert.ok(simulatorLink);
   assert.doesNotMatch(decksLink, /disabled/);
+  assert.doesNotMatch(matchLink, /disabled/);
+  assert.doesNotMatch(simulatorLink, /disabled/);
   assert.doesNotMatch(navigation, /md:hidden">Soon<\/span>/);
   assert.match(brandTitle, /text-\[10px\]/);
   assert.match(brandTitle, /md:text-\[11px\]/);

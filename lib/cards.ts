@@ -9,7 +9,7 @@ import {
   cards,
   traits,
 } from "@/src/db/schema";
-import type { CardListItem } from "@/types/card";
+import { normalizeCardType, type CardListItem } from "@/types/card";
 
 export async function getCards(): Promise<CardListItem[]> {
   const rows = await db
@@ -23,7 +23,9 @@ export async function getCards(): Promise<CardListItem[]> {
       rarityCode: cardVariants.rarityCode,
       isBase: cardVariants.isBase,
       level: cardVariants.level,
+      power: cardVariants.power,
       range: cardVariants.range,
+      abilityText: cards.abilityText,
       imageUrl: cardVariants.imageUrl,
       setCode: cardSets.code,
       traitName: traits.name,
@@ -51,14 +53,16 @@ export async function getCards(): Promise<CardListItem[]> {
     cardsByVariant.set(row.id, {
       cardId: row.cardId,
       cardCode: row.cardCode,
-      cardType: row.cardType,
+      cardType: normalizeCardType(row.cardType),
       colorCode: row.colorCode,
       id: row.id,
       imageUrl: row.imageUrl,
       isBase: row.isBase,
       level: row.level,
       name: row.name,
+      power: row.power,
       range: row.range,
+      abilityText: row.abilityText,
       rarityCode: row.rarityCode,
       setCode: row.setCode,
       traitNames: row.traitName ? [row.traitName] : [],

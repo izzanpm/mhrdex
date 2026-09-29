@@ -175,7 +175,7 @@ export const cardVariants = pgTable(
     isBase: boolean("is_base").notNull().default(false),
     level: integer("level").notNull(),
     power: integer("power"),
-    range: text("range"),
+    range: integer("range"),
     imageUrl: text("image_url"),
     sourcePageUrl: text("source_page_url"),
   },

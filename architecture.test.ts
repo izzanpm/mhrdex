@@ -9,6 +9,7 @@ test("keeps implemented features in the documented architecture folders", () => 
   const expectedFiles = [
     ["app", "(dashboard)", "page.tsx"],
     ["app", "(dashboard)", "decks", "page.tsx"],
+    ["app", "(dashboard)", "simulator", "page.tsx"],
     ["app", "(dashboard)", "loading.tsx"],
     ["components", "app-icon.tsx"],
     ["components", "account-controls.tsx"],
@@ -37,6 +38,11 @@ test("keeps implemented features in the documented architecture folders", () => 
       `${segments.join("/")} must exist`,
     );
   });
+
+  assert.ok(
+    existsSync(projectPath("lib", "simulator")),
+    "lib/simulator/ must exist",
+  );
 
   assert.equal(existsSync(projectPath("app", "page.tsx")), false);
   assert.equal(

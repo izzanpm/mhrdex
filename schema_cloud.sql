@@ -91,7 +91,7 @@ CREATE TABLE "card_variants" (
 	"is_base" boolean DEFAULT false NOT NULL,
 	"level" integer NOT NULL,
 	"power" integer,
-	"range" text,
+	"range" integer,
 	"image_url" text,
 	"source_page_url" text,
 	CONSTRAINT "card_variants_card_rarity_unique" UNIQUE("card_id","rarity_code"),

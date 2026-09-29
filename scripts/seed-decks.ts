@@ -20,14 +20,36 @@ type SeedConfig = {
   colors: readonly string[];
   total: number;
   offset: number;
+  cardCodes?: readonly string[];
 };
+
+const EMBER_AVENGERS_SIMULATOR_CODES = [
+  "BP01-001",
+  "BP01-002",
+  "BP01-003",
+  "BP01-004",
+  "BP01-005",
+  "BP01-006",
+  "BP01-007",
+  "BP01-008",
+  "BP01-009",
+  "BP01-010",
+  "BP01-011",
+  "BP01-012",
+  "BP01-013",
+  "BP01-014",
+  "BP01-015",
+  "BP01-016",
+  "BP01-017",
+] as const;
 
 const SEED_CONFIGS: readonly SeedConfig[] = [
   {
     name: "Ember Avengers",
-    colors: ["red", "yellow"],
-    total: 37,
+    colors: ["red"],
+    total: 50,
     offset: 0,
+    cardCodes: EMBER_AVENGERS_SIMULATOR_CODES,
   },
   {
     name: "Cosmic Tempo",
@@ -99,20 +121,31 @@ export function buildSeedDecks(catalog: readonly SeedCard[]): SeedDeck[] {
         return card ? [card] : [];
       }),
     );
+    const eligibleCards = config.cardCodes === undefined
+      ? availableCards
+      : availableCards.filter((card) => config.cardCodes?.includes(card.cardCode));
+
+    if (eligibleCards.length * 3 < config.total) {
+      throw new Error(
+        `Not enough catalog cards to seed ${config.name} with its configured cards.`,
+      );
+    }
 
     const entries: SeedDeck["entries"] = [];
     let remaining = config.total;
     let index = 0;
 
     while (remaining > 0) {
-      const card = availableCards[(config.offset + index) % availableCards.length];
-      const quantity = Math.min(1 + ((index + config.offset) % 3), remaining);
+      const card = eligibleCards[(config.offset + index) % eligibleCards.length];
+      const quantity = config.cardCodes === undefined
+        ? Math.min(1 + ((index + config.offset) % 3), remaining)
+        : Math.min(3, remaining);
       entries.push({ cardId: card.cardId, quantity });
       remaining -= quantity;
       index += 1;
     }
 
-    const validation = validateDeckContents(entries, availableCards);
+    const validation = validateDeckContents(entries, eligibleCards);
     if (!validation.valid) {
       throw new Error(`Invalid generated seed for ${config.name}: ${validation.message}`);
     }

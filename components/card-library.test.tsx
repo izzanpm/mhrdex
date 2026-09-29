@@ -23,6 +23,9 @@ const cards = [
     rarityCode: "MR",
     imageUrl: "/cards/MHR-001-MR.webp",
     isBase: true,
+    power: null,
+    range: null,
+    abilityText: null,
   },
   {
     id: "variant-ur",
@@ -33,6 +36,9 @@ const cards = [
     rarityCode: "UR",
     imageUrl: "/cards/MHR-001-UR.webp",
     isBase: false,
+    power: null,
+    range: null,
+    abilityText: null,
   },
 ];
 
@@ -166,7 +172,48 @@ test("filters to base variants when base-only is selected", () => {
 test("includes zero in the range filter options", () => {
   const source = readFileSync(new URL("./card-library.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /const RANGE_OPTIONS = \["0", "1", "2", "3", "4", "5"\]/);
+  assert.match(source, /const RANGE_OPTIONS = \[0, 1, 2, 3, 4, 5\] as const/);
+  assert.match(source, /function toggleRangeFilter\(range: number\)/);
+});
+
+test("filters a numeric range without string coercion", () => {
+  const filterableCards = [
+    { ...cards[0], cardCode: "BP01-002", range: 2 },
+    { ...cards[1], cardCode: "BP01-003", range: 3 },
+  ];
+  const result = filterCards(
+    filterableCards,
+    "",
+    {
+      baseOnly: false,
+      colorCodes: [],
+      levels: [],
+      ranges: [3],
+      rarityCode: null,
+      setCodes: [],
+      traitNames: [],
+    } as unknown as Parameters<typeof filterCards>[2],
+  );
+
+  assert.deepEqual(result.map((card) => card.cardCode), ["BP01-003"]);
+});
+
+test("keeps zero selectable in the numeric range filter", () => {
+  const result = filterCards(
+    [{ ...cards[0], cardCode: "BP01-000", range: 0 }],
+    "",
+    {
+      baseOnly: false,
+      colorCodes: [],
+      levels: [],
+      ranges: [0],
+      rarityCode: null,
+      setCodes: [],
+      traitNames: [],
+    },
+  );
+
+  assert.deepEqual(result.map((card) => card.cardCode), ["BP01-000"]);
 });
 
 test("filters cards by the selected catalog facets", () => {
@@ -175,7 +222,7 @@ test("filters cards by the selected catalog facets", () => {
       ...cards[0],
       colorCode: "blue",
       level: 3,
-      range: "3",
+      range: 3,
       setCode: "BP01",
       traitNames: ["Avengers"],
     },
@@ -183,7 +230,7 @@ test("filters cards by the selected catalog facets", () => {
       ...cards[1],
       colorCode: "red",
       level: 4,
-      range: "4",
+      range: 4,
       setCode: "SD01",
       traitNames: ["Guardians"],
     },
@@ -196,7 +243,7 @@ test("filters cards by the selected catalog facets", () => {
       {
         colorCodes: ["blue"],
         levels: [3],
-        ranges: ["3"],
+        ranges: [3],
         rarityCode: "MR",
         setCodes: ["BP01"],
         traitNames: ["Avengers"],
@@ -271,14 +318,14 @@ test("requires cards to contain every selected trait", () => {
 
 test("filters by multiple sets, ranges, and levels with OR matching", () => {
   const filterableCards = [
-    { ...cards[0], level: 1, range: "1", setCode: "BP01" },
-    { ...cards[1], id: "variant-sp", level: 3, range: "3", setCode: "SP01" },
-    { ...cards[0], id: "variant-sd", level: 5, range: "5", setCode: "SD01" },
+    { ...cards[0], level: 1, range: 1, setCode: "BP01" },
+    { ...cards[1], id: "variant-sp", level: 3, range: 3, setCode: "SP01" },
+    { ...cards[0], id: "variant-sd", level: 5, range: 5, setCode: "SD01" },
   ];
   const filters = {
     colorCodes: [],
     levels: [1, 3],
-    ranges: ["1", "3"],
+    ranges: [1, 3],
     rarityCode: null,
     setCodes: ["BP01", "SP01"],
     traitNames: [],

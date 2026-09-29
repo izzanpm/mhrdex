@@ -49,7 +49,7 @@ const RARITY_OPTIONS = [
   "ER",
   "TR",
 ] as const;
-const RANGE_OPTIONS = ["0", "1", "2", "3", "4", "5"] as const;
+const RANGE_OPTIONS = [0, 1, 2, 3, 4, 5] as const;
 const LEVEL_OPTIONS = [1, 2, 3, 4, 5, 6] as const;
 const COLOR_OPTIONS = [
   { className: "bg-app-card-blue", label: "Blue", value: "blue" },
@@ -85,7 +85,9 @@ function getActiveFilterLabels(filters: CardFilters) {
     filters.baseOnly ? "Base variant only" : null,
     filters.setCodes.length ? `Set: ${filters.setCodes.join(", ")}` : null,
     filters.rarityCode ? `Rarity: ${filters.rarityCode}` : null,
-    filters.ranges.length ? `Range: ${filters.ranges.join(", ")}` : null,
+    filters.ranges.length
+      ? `Range: ${filters.ranges.map((range) => `R-${range}`).join(", ")}`
+      : null,
     filters.levels.length ? `Level: ${filters.levels.join(", ")}` : null,
     colorLabels ? `Color: ${colorLabels}` : null,
     filters.traitNames.length
@@ -111,7 +113,8 @@ export function filterCards(
         (card.setCode && filters.setCodes.includes(card.setCode))) &&
       (!filters?.rarityCode || card.rarityCode === filters.rarityCode) &&
       (!filters?.ranges.length ||
-        (card.range && filters.ranges.includes(card.range))) &&
+        (card.range !== null &&
+          filters.ranges.includes(card.range))) &&
       (!filters?.levels.length ||
         (card.level !== undefined && filters.levels.includes(card.level))) &&
       (!filters?.colorCodes.length ||
@@ -271,7 +274,7 @@ export function FilterSheet({
   }
 
   function toggleMultiStringFilter(
-    key: "colorCodes" | "ranges" | "setCodes" | "traitNames",
+    key: "colorCodes" | "setCodes" | "traitNames",
     value: string,
   ) {
     const values = draftFilters[key];
@@ -280,6 +283,15 @@ export function FilterSheet({
       : [...values, value];
 
     applyFilterChange({ ...draftFilters, [key]: nextValues });
+  }
+
+  function toggleRangeFilter(range: number) {
+    applyFilterChange({
+      ...draftFilters,
+      ranges: draftFilters.ranges.includes(range)
+        ? draftFilters.ranges.filter((value) => value !== range)
+        : [...draftFilters.ranges, range],
+    });
   }
 
   function toggleLevelFilter(level: number) {
@@ -374,10 +386,10 @@ export function FilterSheet({
                 {RANGE_OPTIONS.map((option) => (
                   <FilterOption
                     key={option}
-                    onClick={() => toggleMultiStringFilter("ranges", option)}
+                    onClick={() => toggleRangeFilter(option)}
                     selected={draftFilters.ranges.includes(option)}
                   >
-                    {option}
+                    {`R-${option}`}
                   </FilterOption>
                 ))}
               </div>

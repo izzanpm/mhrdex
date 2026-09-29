@@ -100,7 +100,7 @@ Each row represents a rarity and artwork variant of a base card. Decks reference
 | `is_base` | `boolean` | Required; defaults to `false`; marks the variant with the lowest `card_rarities.sort_order` for this card |
 | `level` | `integer` | Required; value from 1 through 6 |
 | `power` | `integer` | Optional |
-| `range` | `text` | Optional; final taxonomy remains open in D3 |
+| `range` | `integer` | Optional; final taxonomy remains open in D3 |
 | `image_url` | `text` | Optional permanent local or hosted path |
 | `source_page_url` | `text` | Optional scraper provenance |
 

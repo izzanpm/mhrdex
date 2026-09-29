@@ -12,9 +12,15 @@ test("shared sidebar keeps navigation destinations honest", () => {
     [
       { href: "/", key: "cards" },
       { href: "/decks", key: "decks" },
-      { href: undefined, key: "match" },
+      { href: "/match", key: "match" },
+      { href: "/simulator", key: "simulator" },
     ],
   );
   assert.equal(sidebarNavigationItems[1].comingSoon, undefined);
-  assert.equal(sidebarNavigationItems[2].comingSoon, true);
+  assert.equal(sidebarNavigationItems[2].comingSoon, undefined);
+  assert.equal(sidebarNavigationItems[2].icon, "match");
+  assert.equal(sidebarNavigationItems[2].label, "Match");
+  assert.equal(sidebarNavigationItems[3].comingSoon, undefined);
+  assert.equal(sidebarNavigationItems[3].icon, "gamepad-2");
+  assert.equal(sidebarNavigationItems[3].label, "SIM");
 });

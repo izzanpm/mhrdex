@@ -114,8 +114,16 @@ afterEach(() => {
 test("parses a complete supported catalog", () => {
   const catalog = parseCatalog(validCatalog);
 
+  assert.equal(catalog.cards[0].cardType, "Character");
   assert.equal(catalog.cards[0].variants[0].rarityCode, "MR");
   assert.equal(catalog.cards[0].abilityText, "An ability.");
+});
+
+test("canonicalizes non-Character card types without collapsing them", () => {
+  const input = structuredClone(validCatalog);
+  input.cards[0].card_type = "EVENT";
+
+  assert.equal(parseCatalog(input).cards[0].cardType, "Event");
 });
 
 test("selects UR as the base variant with the canonical rarity order", () => {

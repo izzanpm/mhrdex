@@ -10,6 +10,7 @@ import {
   cardVariants,
   traits,
 } from "../src/db/schema";
+import { normalizeCardType } from "../types/card";
 
 const COLOR_CODES = new Set([
   "blue",
@@ -247,7 +248,7 @@ export function parseCatalog(value: unknown): ScrapedCatalog {
       name: string(input.name, `${prefix}.name`),
       colorCode,
       setCode,
-      cardType: string(input.card_type, `${prefix}.card_type`),
+      cardType: normalizeCardType(string(input.card_type, `${prefix}.card_type`)),
       traits: traitNames,
       abilityText: nullableString(input.ability_text, `${prefix}.ability_text`),
       flavorText: nullableString(input.flavor_text, `${prefix}.flavor_text`),
@@ -754,6 +755,7 @@ export async function importCatalog(
       const setId = setIds.get(card.setCode);
       if (setId === undefined) throw new Error(`missing set row for ${card.setCode}`);
       const baseRarityCode = getBaseRarityCode(card.variants, raritySortOrders);
+      const cardType = normalizeCardType(card.cardType);
 
       const [cardRow] = await tx
         .insert(cards)
@@ -761,7 +763,7 @@ export async function importCatalog(
           cardCode: card.cardCode,
           name: card.name,
           colorCode: card.colorCode,
-          cardType: card.cardType,
+          cardType,
           abilityText: card.abilityText,
           flavorText: card.flavorText,
           setId,
@@ -771,7 +773,7 @@ export async function importCatalog(
           set: {
             name: card.name,
             colorCode: card.colorCode,
-            cardType: card.cardType,
+            cardType,
             abilityText: card.abilityText,
             flavorText: card.flavorText,
             setId,
@@ -794,7 +796,7 @@ export async function importCatalog(
             isBase: variant.rarityCode === baseRarityCode,
             level: variant.level,
             power: variant.power,
-            range: variant.range === null ? null : String(variant.range),
+            range: variant.range,
             imageUrl: imagePaths.get(`${card.cardCode}|${variant.rarityCode}`)!,
             sourcePageUrl: variant.sourcePageUrl,
           })
@@ -804,7 +806,7 @@ export async function importCatalog(
               isBase: variant.rarityCode === baseRarityCode,
               level: variant.level,
               power: variant.power,
-              range: variant.range === null ? null : String(variant.range),
+              range: variant.range,
               imageUrl: imagePaths.get(`${card.cardCode}|${variant.rarityCode}`)!,
               sourcePageUrl: variant.sourcePageUrl,
             },

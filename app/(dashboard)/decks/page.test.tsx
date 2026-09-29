@@ -65,8 +65,11 @@ const builderCards = [
       rarityCode: "MR",
       isBase: true,
       colorCode: "red",
-    imageUrl: "/cards/MHR-001-MR.webp",
-    traitNames: ["Avenger", "Tech"],
+      imageUrl: "/cards/MHR-001-MR.webp",
+      traitNames: ["Avenger", "Tech"],
+      power: null,
+      range: null,
+      abilityText: null,
   },
   {
     id: "variant-ur",
@@ -77,8 +80,11 @@ const builderCards = [
       rarityCode: "UR",
       isBase: false,
       colorCode: "blue",
-    imageUrl: "/cards/MHR-002-UR.webp",
-    traitNames: ["Avenger", "Pilot"],
+      imageUrl: "/cards/MHR-002-UR.webp",
+      traitNames: ["Avenger", "Pilot"],
+      power: null,
+      range: null,
+      abilityText: null,
   },
 ];
 
@@ -436,6 +442,9 @@ test("provides the deck builder design route", () => {
           isBase: false,
           colorCode: "green",
           imageUrl: "/cards/MHR-003-R.webp",
+          power: null,
+          range: null,
+          abilityText: null,
         },
       ]}
       deck={{

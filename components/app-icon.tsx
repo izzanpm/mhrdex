@@ -1,6 +1,7 @@
 import {
   ChevronRight,
   Clock3,
+  Gamepad2,
   House,
   ListSortDescending,
   Layers,
@@ -20,6 +21,7 @@ export type IconName =
   | "chevron"
   | "close"
   | "decks"
+  | "gamepad-2"
   | "home"
   | "list-sort-descending"
   | "match"
@@ -35,6 +37,7 @@ const ICONS: Record<IconName, LucideIcon> = {
   chevron: ChevronRight,
   close: X,
   decks: Layers,
+  "gamepad-2": Gamepad2,
   home: House,
   "list-sort-descending": ListSortDescending,
   match: Clock3,

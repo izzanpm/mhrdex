@@ -64,6 +64,11 @@ test("defines the cloud tables from the ERD", () => {
   ]);
 });
 
+test("stores numeric power and range in the card variant contract", () => {
+  assert.equal(cardVariants.power.dataType, "number int32");
+  assert.equal(cardVariants.range.dataType, "number int32");
+});
+
 test("defines the required checks and indexes", () => {
   const variantsConfig = getTableConfig(cardVariants);
 

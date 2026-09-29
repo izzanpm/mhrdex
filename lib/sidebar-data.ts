@@ -1,6 +1,11 @@
-export type SidebarNavKey = "cards" | "decks" | "match";
+export type SidebarNavKey = "cards" | "decks" | "match" | "simulator";
 
-export type SidebarIconName = "cards" | "decks" | "home" | "match";
+export type SidebarIconName =
+  | "cards"
+  | "decks"
+  | "gamepad-2"
+  | "home"
+  | "match";
 
 export type SidebarNavigationItem = {
   comingSoon?: boolean;
@@ -19,9 +24,15 @@ export const sidebarNavigationItems: readonly SidebarNavigationItem[] = [
     label: "Decks",
   },
   {
-    comingSoon: true,
+    href: "/match",
     icon: "match",
     key: "match",
     label: "Match",
+  },
+  {
+    href: "/simulator",
+    icon: "gamepad-2",
+    key: "simulator",
+    label: "SIM",
   },
 ];

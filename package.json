@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "test": "tsx --test architecture.test.ts src/db/schema.test.ts lib/auth-submit.test.ts lib/auth-guard.test.ts lib/sidebar-data.test.ts lib/sign-up-validation.test.ts lib/deck-validation.test.ts lib/decks.test.ts components/app-icon.test.tsx components/sidebar.test.tsx components/card-library.test.tsx components/sign-in-screen.test.tsx components/sign-up-screen.test.tsx \"app/(auth)/sign-in/page.test.tsx\" \"app/(dashboard)/decks/page.test.tsx\" scripts/cards-import.test.ts scripts/seed-decks.test.ts",
+    "test": "tsx --test architecture.test.ts src/db/schema.test.ts lib/auth-submit.test.ts lib/auth-guard.test.ts lib/sidebar-data.test.ts lib/sign-up-validation.test.ts lib/deck-validation.test.ts lib/decks.test.ts lib/cards.test.ts lib/simulator/types.test.ts lib/simulator/rules.test.ts lib/simulator/adapter.test.ts lib/simulator/engine-action.test.ts lib/simulator/engine-battle.test.ts lib/simulator/effects.test.ts lib/simulator/cards.test.ts lib/simulator/bot.test.ts components/app-icon.test.tsx components/sidebar.test.tsx components/card-library.test.tsx components/sign-in-screen.test.tsx components/sign-up-screen.test.tsx components/simulator-screen.test.tsx \"app/(auth)/sign-in/page.test.tsx\" \"app/(dashboard)/decks/page.test.tsx\" \"app/(dashboard)/simulator/page.test.tsx\" \"app/(dashboard)/match/page.test.tsx\" scripts/cards-import.test.ts scripts/seed-decks.test.ts",
     "import:cards": "tsx scripts/import-cards.ts",
     "seed:decks": "tsx scripts/seed-decks.ts",
     "start": "next start",
